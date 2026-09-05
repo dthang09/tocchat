@@ -4,6 +4,7 @@ import { validateAvatarFile, resizeAndCompressAvatar } from '../features/profile
 
 export interface UpdateProfileParams {
   display_name?: string;
+  username?: string | null;
   status?: string;
   avatar_url?: string;
 }
@@ -28,20 +29,43 @@ export const profileService = {
   },
 
   /**
-   * Update profile fields (display name, status, avatar URL)
+   * Update profile fields (display name, username, status, avatar URL)
    */
   async updateProfile(userId: string, updates: UpdateProfileParams): Promise<Profile> {
+    const payload: {
+      display_name?: string | null;
+      username?: string | null;
+      status?: string | null;
+      avatar_url?: string | null;
+      updated_at?: string;
+    } = {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (typeof updates.username === 'string') {
+      const clean = updates.username.trim().replace(/^@/, '').toLowerCase();
+      payload.username = clean || null;
+    }
+
     const { data, error } = await supabase
       .from('profiles')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('id', userId)
       .select('*')
       .single();
 
     if (error) {
+      if (error.code === '23505') {
+        throw new Error(
+          `Tên người dùng "@${updates.username}" đã có người sử dụng. Vui lòng chọn tên khác.`
+        );
+      }
+      if (error.code === '42703') {
+        throw new Error(
+          'Cơ sở dữ liệu Supabase chưa có cột "username". Vui lòng thực thi migration 20260905120000_friendships_schema.sql trong Supabase SQL Editor.'
+        );
+      }
       throw new Error(`Cập nhật trang cá nhân thất bại: ${error.message}`);
     }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Edit3, Mail, Calendar, User, Smile } from 'lucide-react';
+import { ChevronLeft, Edit3, Mail, Calendar, User, Smile, AtSign } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { Avatar } from '../../../components/ui/Avatar';
 import { Button } from '../../../components/ui/Button';
@@ -67,7 +67,11 @@ export const ProfileScreen: React.FC = () => {
             {displayName}
           </h2>
 
-          <div className="mt-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+          <p className="text-xs font-semibold text-brand-600 dark:text-brand-400 mt-0.5">
+            {profile?.username ? `@${profile.username}` : (user?.email ? `@${user.email.split('@')[0]}` : '@chuadat')}
+          </p>
+
+          <div className="mt-2 px-3 py-1 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
             <Smile className="w-3.5 h-3.5 text-brand-500" />
             <span>{status}</span>
           </div>
@@ -106,6 +110,21 @@ export const ProfileScreen: React.FC = () => {
                 </span>
                 <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">
                   {displayName}
+                </span>
+              </div>
+            </div>
+
+            {/* Username */}
+            <div className="p-3.5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-500 flex items-center justify-center shrink-0">
+                <AtSign className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 block">
+                  Tên người dùng (Username)
+                </span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">
+                  {profile?.username ? `@${profile.username}` : 'Chưa thiết lập (chạm "Chỉnh sửa" để đặt)'}
                 </span>
               </div>
             </div>

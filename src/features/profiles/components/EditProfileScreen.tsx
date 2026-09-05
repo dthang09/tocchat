@@ -8,6 +8,7 @@ import {
   User,
   Smile,
   Loader2,
+  AtSign,
 } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { Avatar } from '../../../components/ui/Avatar';
@@ -45,15 +46,19 @@ export const EditProfileScreen: React.FC = () => {
     user?.email?.split('@')[0] ||
     '';
 
+  const initialUsername = profile?.username || '';
   const initialStatus = profile?.status || 'Đang hoạt động';
 
   const [displayName, setDisplayName] = useState(initialDisplayName);
+  const [username, setUsername] = useState(initialUsername);
   const [status, setStatus] = useState(initialStatus);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || null);
   const [localError, setLocalError] = useState<string | null>(null);
 
+  const cleanUsername = username.trim().replace(/^@/, '').toLowerCase();
   const hasChanges =
     displayName.trim() !== initialDisplayName.trim() ||
+    cleanUsername !== initialUsername.toLowerCase() ||
     status.trim() !== initialStatus.trim();
 
   // Handle avatar file selection
@@ -96,9 +101,19 @@ export const EditProfileScreen: React.FC = () => {
       return;
     }
 
+    if (cleanUsername) {
+      if (!/^[a-z0-9_]{3,20}$/.test(cleanUsername)) {
+        setLocalError(
+          'Tên người dùng (@username) phải từ 3 đến 20 ký tự, chỉ gồm chữ cái thường không dấu, số hoặc dấu gạch dưới (_).'
+        );
+        return;
+      }
+    }
+
     try {
       await updateProfile({
         display_name: trimmedName,
+        username: cleanUsername || null,
         status: status.trim() || 'Đang hoạt động',
       });
       navigate(-1);
@@ -233,6 +248,36 @@ export const EditProfileScreen: React.FC = () => {
             </div>
             <p className="text-[11px] text-slate-400 dark:text-slate-500 ml-1">
               Tên này sẽ hiển thị với bạn bè của bạn trong các đoạn chat.
+            </p>
+          </div>
+
+          {/* Username Field */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="edit-username"
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-300 ml-1"
+            >
+              Tên người dùng (@username)
+            </label>
+            <div className="relative flex items-center">
+              <div className="absolute left-3.5 text-slate-400 pointer-events-none">
+                <AtSign className="w-4 h-4" />
+              </div>
+              <input
+                id="edit-username"
+                type="text"
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (localError) setLocalError(null);
+                }}
+                placeholder="ví dụ: acctest01112"
+                maxLength={20}
+                className="w-full h-11 pl-10 pr-4 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all lowercase"
+              />
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 ml-1">
+              Chữ thường, số và dấu gạch dưới (3 - 20 ký tự). Dùng để bạn bè tìm kiếm và kết bạn với bạn.
             </p>
           </div>
 

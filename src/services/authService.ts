@@ -202,16 +202,35 @@ export const authService = {
       fallbackDisplayName?.trim() ||
       (email ? email.split('@')[0] : 'Thành viên TocChat');
 
+    const derivedUsername = (email ? email.split('@')[0] : userId.split('-')[0])
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '');
+
+    const insertPayload: { id: string; display_name: string; status: string; username?: string } = {
+      id: userId,
+      display_name: derivedName,
+      status: 'Đang hoạt động',
+      username: derivedUsername || undefined,
+    };
+
     // 3. Insert profile row
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('profiles')
-      .insert({
-        id: userId,
-        display_name: derivedName,
-        status: 'Đang hoạt động',
-      })
+      .insert(insertPayload)
       .select('*')
       .single();
+
+    if (error && error.code === '42703') {
+      // If username column does not exist yet on Supabase
+      delete insertPayload.username;
+      const retry = await supabase
+        .from('profiles')
+        .insert(insertPayload)
+        .select('*')
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       // If error is duplicate key, re-fetch
