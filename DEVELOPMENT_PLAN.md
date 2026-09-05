@@ -53,6 +53,13 @@ For each completed module, record:
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
     - Known limitations: Messages do not exist yet (messaging schema planned for Module 06).
+- [x] Inserted Module — Friends & Contacts
+    - Completed: 2026-09-05
+    - Commit: cb7f244
+    - Branch: main
+    - Checks: typecheck ✅ / lint ✅ / build ✅
+    - Notes: Inserted module to provide private friend relationships and real group member selection without fake users or fake presence.
+    - Known limitations: Friend request notifications currently in-app; push notifications will be integrated in future notification updates.
 - [ ] Module 06 — Messaging Database Schema
 - [ ] Module 07 — Realtime Text Messaging
 - [ ] Module 08 — Message Replies

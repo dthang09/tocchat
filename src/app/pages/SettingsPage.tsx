@@ -10,6 +10,7 @@ import {
   Sun,
   Smartphone,
   LogOut,
+  Users,
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../features/auth';
@@ -69,6 +70,30 @@ export const SettingsPage: React.FC = () => {
             </p>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+        </div>
+
+        {/* Section: Bạn bè & Kết nối */}
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 mb-2">
+            Kết nối
+          </h3>
+          <div className="bg-slate-50 dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden">
+            <div
+              onClick={() => navigate('/friends')}
+              className="flex items-center justify-between p-3.5 min-h-[52px] cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800/40 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-500 flex items-center justify-center">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200 block">Bạn bè & Danh bạ</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">Quản lý danh sách và lời mời</span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </div>
+          </div>
         </div>
 
         {/* Section: Tùy chỉnh hiển thị */}

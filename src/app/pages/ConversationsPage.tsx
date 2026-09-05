@@ -8,6 +8,7 @@ import {
   MessageSquareDashed,
   X,
   Users,
+  UserPlus,
   Loader2,
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
@@ -18,6 +19,7 @@ import {
   CreateGroupModal,
   type ConversationWithDetails,
 } from '../../features/conversations';
+import { useFriends } from '../../features/friends';
 import { Avatar } from '../../features/profiles';
 
 export const ConversationsPage: React.FC = () => {
@@ -26,10 +28,14 @@ export const ConversationsPage: React.FC = () => {
   const { user, profile } = useAuth();
   const {
     conversations,
-    availableProfiles,
-    isLoading,
+    isLoading: isLoadingConversations,
     createDirect,
   } = useConversations();
+
+  const {
+    friends,
+    incomingCount,
+  } = useFriends();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -85,6 +91,20 @@ export const ConversationsPage: React.FC = () => {
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-1.5">
+          {/* Friends list shortcut button */}
+          <button
+            onClick={() => navigate('/friends')}
+            className="w-11 h-11 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 active:scale-95 transition-all relative"
+            aria-label="Danh sách bạn bè"
+            title="Bạn bè & Danh bạ"
+          >
+            <Users className="w-5 h-5" />
+            {incomingCount > 0 && (
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-950" />
+            )}
+          </button>
+
+          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className="w-11 h-11 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 active:scale-95 transition-all"
@@ -98,10 +118,11 @@ export const ConversationsPage: React.FC = () => {
             )}
           </button>
 
+          {/* Create Group Button */}
           <button
             onClick={() => setIsGroupModalOpen(true)}
             className="w-11 h-11 rounded-full flex items-center justify-center bg-brand-50 hover:bg-brand-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-brand-600 dark:text-brand-400 active:scale-95 transition-all"
-            aria-label="Tạo cuộc trò chuyện mới"
+            aria-label="Tạo nhóm trò chuyện mới"
             title="Tạo nhóm mới"
           >
             <SquarePen className="w-5 h-5" />
@@ -135,7 +156,7 @@ export const ConversationsPage: React.FC = () => {
       {/* Active People / Quick Contacts Carousel */}
       <div className="pt-1 pb-2">
         <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 py-1">
-          {/* Create Group Quick Action Slot */}
+          {/* Create Group Action Slot */}
           <div
             onClick={() => setIsGroupModalOpen(true)}
             className="flex flex-col items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-transform"
@@ -148,22 +169,34 @@ export const ConversationsPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Available Friends from the ~12 member group */}
-          {availableProfiles.map((p) => {
-            const name = p.display_name || 'Bạn bè';
+          {/* Add Friend Action Slot */}
+          <div
+            onClick={() => navigate('/friends/search')}
+            className="flex flex-col items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-transform"
+          >
+            <div className="relative w-13 h-13 rounded-full bg-slate-100 dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+              <UserPlus className="w-5 h-5" />
+            </div>
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 w-14 text-center truncate">
+              Thêm bạn
+            </span>
+          </div>
+
+          {/* Accepted Friends Carousel */}
+          {friends.map((item) => {
+            const friend = item.friend;
+            const name = friend.display_name || 'Bạn bè';
             return (
               <div
-                key={p.id}
-                onClick={() => handleContactClick(p.id)}
+                key={item.friendshipId}
+                onClick={() => handleContactClick(friend.id)}
                 className="flex flex-col items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-transform"
                 title={`Nhắn tin với ${name}`}
               >
                 <Avatar
-                  src={p.avatar_url}
+                  src={friend.avatar_url}
                   name={name}
                   size="xl"
-                  isOnline={true}
-                  showOnlineDot={true}
                 />
                 <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 w-14 text-center truncate">
                   {name}
@@ -176,7 +209,7 @@ export const ConversationsPage: React.FC = () => {
 
       {/* Conversation List / Content Area */}
       <div className="flex-1 px-3 pt-2">
-        {isLoading ? (
+        {isLoadingConversations ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
             <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
             <span className="text-xs">Đang tải danh sách đoạn chat...</span>
@@ -223,7 +256,6 @@ export const ConversationsPage: React.FC = () => {
       <CreateGroupModal
         isOpen={isGroupModalOpen}
         onClose={() => setIsGroupModalOpen(false)}
-        availableProfiles={availableProfiles}
         onCreated={(newConv: ConversationWithDetails) => {
           navigate(`/conversations/${newConv.id}`);
         }}

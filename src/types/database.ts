@@ -12,10 +12,12 @@ export type Json =
 
 export type ConversationType = 'direct' | 'group';
 export type ConversationRole = 'member' | 'admin';
+export type FriendshipStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 
 export type Profile = {
   id: string;
   display_name: string | null;
+  username: string | null;
   avatar_url: string | null;
   status: string | null;
   created_at: string;
@@ -40,6 +42,16 @@ export type ConversationMember = {
   joined_at: string;
 };
 
+export type Friendship = {
+  id: string;
+  user_a_id: string;
+  user_b_id: string;
+  status: FriendshipStatus;
+  requested_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -48,6 +60,7 @@ export type Database = {
         Insert: {
           id: string;
           display_name?: string | null;
+          username?: string | null;
           avatar_url?: string | null;
           status?: string | null;
           created_at?: string;
@@ -56,6 +69,7 @@ export type Database = {
         Update: {
           id?: string;
           display_name?: string | null;
+          username?: string | null;
           avatar_url?: string | null;
           status?: string | null;
           created_at?: string;
@@ -100,6 +114,28 @@ export type Database = {
           nickname?: string | null;
           role?: ConversationRole;
           joined_at?: string;
+        };
+        Relationships: [];
+      };
+      friendships: {
+        Row: Friendship;
+        Insert: {
+          id?: string;
+          user_a_id: string;
+          user_b_id: string;
+          status?: FriendshipStatus;
+          requested_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_a_id?: string;
+          user_b_id?: string;
+          status?: FriendshipStatus;
+          requested_by?: string;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

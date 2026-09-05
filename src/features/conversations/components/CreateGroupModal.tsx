@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Users, Check, Search, AlertCircle, Loader2 } from 'lucide-react';
-import type { Profile } from '../../../types';
+import { useNavigate } from 'react-router-dom';
+import { X, Camera, Users, Check, Search, AlertCircle, Loader2, UserPlus } from 'lucide-react';
 import type { ConversationWithDetails } from '../services/conversationService';
 import { useConversations } from '../hooks/useConversations';
 import { useProfile } from '../../profiles/hooks/useProfile';
+import { useFriends } from '../../friends';
 import { Avatar } from '../../../components/ui/Avatar';
 import { Button } from '../../../components/ui/Button';
 
@@ -11,18 +12,18 @@ export interface CreateGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreated: (conversation: ConversationWithDetails) => void;
-  availableProfiles: Profile[];
 }
 
 export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   isOpen,
   onClose,
   onCreated,
-  availableProfiles,
 }) => {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { createGroup, isCreating } = useConversations();
   const { uploadAvatar } = useProfile();
+  const { friends, isLoading: isLoadingFriends } = useFriends();
 
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -32,6 +33,8 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const friendProfiles = friends.map((item) => item.friend);
 
   const toggleMember = (id: string) => {
     setSelectedIds((prev) =>
@@ -88,12 +91,12 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     }
   };
 
-  const filteredProfiles = availableProfiles.filter((p) => {
+  const filteredFriends = friendProfiles.filter((p) => {
     const query = searchMember.toLowerCase().trim();
     if (!query) return true;
     return (
       (p.display_name && p.display_name.toLowerCase().includes(query)) ||
-      (p.status && p.status.toLowerCase().includes(query))
+      (p.username && p.username.toLowerCase().includes(query))
     );
   });
 
@@ -147,7 +150,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploadingAvatar}
-                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center ring-2 ring-white dark:ring-slate-950 hover:bg-brand-500 active:scale-95 transition-all"
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center ring-2 ring-white dark:ring-slate-950 hover:bg-brand-500 active:scale-95 transition-all cursor-pointer"
                 title="Chọn ảnh nhóm"
               >
                 {isUploadingAvatar ? (
@@ -179,36 +182,61 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
           <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Chọn thành viên
+                Chọn bạn bè vào nhóm
               </label>
               <span className="text-[11px] font-semibold text-brand-600 dark:text-brand-400 px-2 py-0.5 bg-brand-50 dark:bg-brand-950/60 rounded-full">
                 Đã chọn: {selectedIds.length}
               </span>
             </div>
 
-            {/* Filter Search */}
-            <div className="relative flex items-center h-9 w-full rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 text-slate-400">
-              <Search className="w-3.5 h-3.5 mr-2 shrink-0" />
-              <input
-                type="text"
-                value={searchMember}
-                onChange={(e) => setSearchMember(e.target.value)}
-                placeholder="Tìm bạn bè theo tên..."
-                className="w-full bg-transparent text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none"
-              />
-            </div>
+            {/* Filter Search within friend list */}
+            {friendProfiles.length > 0 && (
+              <div className="relative flex items-center h-9 w-full rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 text-slate-400">
+                <Search className="w-3.5 h-3.5 mr-2 shrink-0" />
+                <input
+                  type="text"
+                  value={searchMember}
+                  onChange={(e) => setSearchMember(e.target.value)}
+                  placeholder="Tìm kiếm trong danh sách bạn bè..."
+                  className="w-full bg-transparent text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none"
+                />
+              </div>
+            )}
 
             {/* Members List */}
             <div className="max-h-[220px] overflow-y-auto no-scrollbar space-y-1 pt-1">
-              {filteredProfiles.length === 0 ? (
+              {isLoadingFriends ? (
+                <div className="py-8 flex flex-col items-center justify-center gap-2 text-slate-400">
+                  <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
+                  <span className="text-xs">Đang tải danh sách bạn bè...</span>
+                </div>
+              ) : friendProfiles.length === 0 ? (
+                /* Empty friend list state required by prompt */
+                <div className="py-8 flex flex-col items-center justify-center text-center px-4">
+                  <Users className="w-8 h-8 text-slate-400 mb-2" />
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                    Bạn chưa có bạn bè để thêm vào nhóm.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      navigate('/friends/search');
+                    }}
+                    className="h-9 px-4 rounded-full bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 active:scale-95 transition-all"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Thêm bạn</span>
+                  </button>
+                </div>
+              ) : filteredFriends.length === 0 ? (
                 <div className="py-6 text-center text-xs text-slate-400">
-                  {availableProfiles.length === 0
-                    ? 'Chưa có thành viên nào khác trong danh sách.'
-                    : 'Không tìm thấy thành viên phù hợp.'}
+                  Không tìm thấy bạn bè nào phù hợp với &quot;{searchMember}&quot;.
                 </div>
               ) : (
-                filteredProfiles.map((p) => {
+                filteredFriends.map((p) => {
                   const isSelected = selectedIds.includes(p.id);
+                  const username = p.username ? `@${p.username}` : '';
                   return (
                     <div
                       key={p.id}
@@ -230,7 +258,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                             {p.display_name || 'Người dùng TocChat'}
                           </p>
                           <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
-                            {p.status || 'Đang hoạt động'}
+                            {username || p.status || 'Thành viên'}
                           </p>
                         </div>
                       </div>

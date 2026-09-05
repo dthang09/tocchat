@@ -8,6 +8,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { LoginScreen, RegisterScreen, ProtectedRoute, PublicOnlyRoute } from '../features/auth';
 import { ProfileScreen, EditProfileScreen } from '../features/profiles';
 import { ConversationScreen } from '../features/conversations';
+import { FriendListScreen, FriendSearchScreen } from '../features/friends';
 
 export const router = createBrowserRouter([
   // Public auth routes (redirects authenticated users away from /login and /register)
@@ -52,6 +53,14 @@ export const router = createBrowserRouter([
           {
             path: 'settings',
             element: <SettingsPage />,
+          },
+          {
+            path: 'friends',
+            element: <FriendListScreen />,
+          },
+          {
+            path: 'friends/search',
+            element: <FriendSearchScreen />,
           },
           {
             path: 'profile',
