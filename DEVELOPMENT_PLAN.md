@@ -47,7 +47,12 @@ For each completed module, record:
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
     - Known limitations: Requires 'avatars' storage bucket and policies created in Supabase project to upload avatar images over the network.
-- [ ] Module 05 — Conversations
+- [x] Module 05 — Conversations
+    - Completed: 2026-09-05
+    - Commit: pending
+    - Branch: main
+    - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
+    - Known limitations: Messages do not exist yet (messaging schema planned for Module 06).
 - [ ] Module 06 — Messaging Database Schema
 - [ ] Module 07 — Realtime Text Messaging
 - [ ] Module 08 — Message Replies

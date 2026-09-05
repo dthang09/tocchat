@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { MessageCircle, Bot, Phone, Settings, WifiOff } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -8,8 +8,11 @@ import { Spinner } from '../components/ui/Spinner';
 import { cn } from '../utils/cn';
 
 export const AppShell: React.FC = () => {
+  const location = useLocation();
   const isOnline = useOnlineStatus();
   const { isLoading, loadingMessage } = useAppStore();
+
+  const isConversationOpen = location.pathname.startsWith('/conversations/');
 
   const navItems = [
     { to: '/', label: 'Đoạn chat', icon: MessageCircle },
@@ -36,11 +39,12 @@ export const AppShell: React.FC = () => {
           <Outlet />
         </main>
 
-        {/* Mobile Native-Style Bottom Navigation */}
-        <nav
-          className="h-[64px] border-t border-slate-100 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-3 flex items-center justify-around z-30 shrink-0 pb-safe"
-          aria-label="Điều hướng chính"
-        >
+        {/* Mobile Native-Style Bottom Navigation (Hidden when in full conversation chat) */}
+        {!isConversationOpen && (
+          <nav
+            className="h-[64px] border-t border-slate-100 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-3 flex items-center justify-around z-30 shrink-0 pb-safe"
+            aria-label="Điều hướng chính"
+          >
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -78,6 +82,7 @@ export const AppShell: React.FC = () => {
             </NavLink>
           ))}
         </nav>
+        )}
 
         {/* Global Loading Overlay */}
         {isLoading && (

@@ -1,6 +1,10 @@
 /**
  * Feature: conversations
- * Planned in: Module 05 — Conversations
- * TODO: Implement in upcoming phase modules.
+ * Module 05 — Conversations
  */
-export {};
+
+export * from './services/conversationService';
+export * from './hooks/useConversations';
+export * from './components/ConversationRow';
+export * from './components/CreateGroupModal';
+export * from './components/ConversationScreen';
