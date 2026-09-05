@@ -81,6 +81,20 @@ export const profileService = {
       });
 
     if (uploadError) {
+      const msg = uploadError.message || '';
+      if (msg.toLowerCase().includes('bucket not found')) {
+        throw new Error(
+          'Chưa tạo bucket "avatars" trên Supabase Storage. Vui lòng tạo bucket "avatars" (chế độ Public) trong mục Storage của Supabase.'
+        );
+      }
+      if (
+        msg.toLowerCase().includes('row-level security') ||
+        msg.toLowerCase().includes('violates row-level security')
+      ) {
+        throw new Error(
+          'Chưa phân quyền lưu trữ ảnh. Vui lòng thêm chính sách Storage Policy cho bucket "avatars".'
+        );
+      }
       throw new Error(`Tải ảnh lên máy chủ thất bại: ${uploadError.message}`);
     }
 
