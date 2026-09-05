@@ -47,6 +47,10 @@ export function formatAuthError(error: unknown): string {
     rawMessage.includes('network') ||
     rawMessage.includes('networkrequestfailed')
   ) {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    if (!url || url.includes('placeholder.supabase.co')) {
+      return 'Chưa cấu hình Supabase Backend. Bạn cần thêm VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY vào file .env.';
+    }
     return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.';
   }
 
