@@ -31,7 +31,7 @@ For each completed module, record:
     - Known limitations: Application shell with feature stubs; Supabase client configured with placeholder fallback until project credentials are provided; no database tables or authentication yet (planned for Modules 02-03).
 - [x] Module 02 — Core Database Schema
     - Completed: 2026-09-05
-    - Commit: pending
+    - Commit: c810a3f
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
     - Known limitations: Local migrations only, not applied to a hosted database yet.
