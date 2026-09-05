@@ -6,6 +6,7 @@ import { CallsPage } from './pages/CallsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { LoginScreen, RegisterScreen, ProtectedRoute, PublicOnlyRoute } from '../features/auth';
+import { ProfileScreen, EditProfileScreen } from '../features/profiles';
 
 export const router = createBrowserRouter([
   // Public auth routes (redirects authenticated users away from /login and /register)
@@ -46,6 +47,14 @@ export const router = createBrowserRouter([
           {
             path: 'settings',
             element: <SettingsPage />,
+          },
+          {
+            path: 'profile',
+            element: <ProfileScreen />,
+          },
+          {
+            path: 'profile/edit',
+            element: <EditProfileScreen />,
           },
         ],
       },

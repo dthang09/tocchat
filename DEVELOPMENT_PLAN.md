@@ -41,7 +41,12 @@ For each completed module, record:
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
     - Known limitations: Real signup/login requires a connected Supabase project with environment variables set. Handled with friendly errors in offline/unconfigured environments.
-- [ ] Module 04 — User Profiles
+- [x] Module 04 — User Profiles
+    - Completed: 2026-09-05
+    - Commit: pending
+    - Branch: main
+    - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
+    - Known limitations: Requires 'avatars' storage bucket and policies created in Supabase project to upload avatar images over the network.
 - [ ] Module 05 — Conversations
 - [ ] Module 06 — Messaging Database Schema
 - [ ] Module 07 — Realtime Text Messaging

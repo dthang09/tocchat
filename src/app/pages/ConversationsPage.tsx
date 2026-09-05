@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, SquarePen, Sun, Moon, MessageSquareDashed, X } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import { useAuth } from '../../features/auth';
+import { Avatar } from '../../features/profiles';
 import { cn } from '../../utils/cn';
 
 interface QuickContact {
@@ -11,8 +14,16 @@ interface QuickContact {
 }
 
 export const ConversationsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { user, profile } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const displayName =
+    profile?.display_name ||
+    user?.user_metadata?.display_name ||
+    user?.email?.split('@')[0] ||
+    'User';
 
   // Sample contacts layout for the active/quick-contacts carousel (Messenger pattern)
   const quickContacts: QuickContact[] = [
@@ -33,9 +44,12 @@ export const ConversationsPage: React.FC = () => {
       <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md pt-safe px-4 pt-3 pb-2 flex items-center justify-between border-b border-transparent transition-colors">
         <div className="flex items-center gap-2.5">
           {/* User profile avatar thumbnail / status */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-sky-400 text-white font-bold text-sm flex items-center justify-center shadow-xs cursor-pointer active:scale-95 transition-transform">
-            T
-          </div>
+          <Avatar
+            src={profile?.avatar_url}
+            name={displayName}
+            size="md"
+            onClick={() => navigate('/profile')}
+          />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-none">
             Đoạn chat
           </h1>

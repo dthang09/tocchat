@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Palette,
   Bell,
@@ -12,15 +13,22 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../features/auth';
+import { Avatar } from '../../features/profiles';
 import { cn } from '../../utils/cn';
 
 export const SettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { user, profile, signOut, isLoading } = useAuth();
 
-  const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Thành viên TocChat';
-  const initial = (displayName[0] || 'T').toUpperCase();
+  const displayName =
+    profile?.display_name ||
+    user?.user_metadata?.display_name ||
+    user?.email?.split('@')[0] ||
+    'Thành viên TocChat';
+
   const userEmail = user?.email || 'Chưa cập nhật email';
+  const status = profile?.status || 'Đang hoạt động';
 
   const handleLogout = async () => {
     try {
@@ -41,16 +49,23 @@ export const SettingsPage: React.FC = () => {
 
       <div className="px-4 space-y-4 pt-2">
         {/* User Profile Card (Messenger mobile pattern) */}
-        <div className="flex items-center gap-3.5 p-3.5 bg-slate-50 dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 cursor-pointer active:scale-98 transition-all">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-sky-400 text-white font-bold text-xl flex items-center justify-center shadow-xs shrink-0">
-            {initial}
-          </div>
+        <div
+          onClick={() => navigate('/profile')}
+          className="flex items-center gap-3.5 p-3.5 bg-slate-50 dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 cursor-pointer active:scale-98 transition-all hover:bg-slate-100/70 dark:hover:bg-slate-800/60"
+        >
+          <Avatar
+            src={profile?.avatar_url}
+            name={displayName}
+            size="xl"
+            showOnlineDot={true}
+            isOnline={true}
+          />
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
               {displayName}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-              {userEmail}
+              {status} • {userEmail}
             </p>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
