@@ -29,7 +29,12 @@ For each completed module, record:
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
     - Known limitations: Application shell with feature stubs; Supabase client configured with placeholder fallback until project credentials are provided; no database tables or authentication yet (planned for Modules 02-03).
-- [ ] Module 02 — Core Database Schema
+- [x] Module 02 — Core Database Schema
+    - Completed: 2026-09-05
+    - Commit: pending
+    - Branch: main
+    - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
+    - Known limitations: Local migrations only, not applied to a hosted database yet.
 - [ ] Module 03 — Authentication
 - [ ] Module 04 — User Profiles
 - [ ] Module 05 — Conversations
