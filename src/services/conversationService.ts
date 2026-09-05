@@ -203,46 +203,74 @@ export const conversationService = {
       throw new Error('Vui lòng nhập tên nhóm.');
     }
 
-    // 1. Insert conversation row
-    const { data: convData, error: convError } = await supabase
+    const convId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    // 1. Insert conversation row without .select() to prevent SELECT policy evaluation before membership exists
+    const { error: convError } = await supabase
       .from('conversations')
       .insert({
+        id: convId,
         type: 'group' as ConversationType,
         name: trimmedName,
         avatar_url: params.avatar_url || null,
         created_by: creatorId,
-      })
-      .select('*')
-      .single();
+        created_at: now,
+        updated_at: now,
+      });
 
-    if (convError || !convData) {
-      throw new Error(`Không thể tạo nhóm: ${convError?.message || 'Lỗi không xác định'}`);
+    if (convError) {
+      throw new Error(`Không thể tạo nhóm: ${convError.message}`);
     }
 
-    const conversation = convData as Conversation;
-
-    // 2. Prepare members (creator as admin, others as member)
-    const allMemberIds = Array.from(new Set([creatorId, ...params.member_ids]));
-    const memberRows = allMemberIds.map((uid) => ({
-      conversation_id: conversation.id,
-      user_id: uid,
-      role: (uid === creatorId ? 'admin' : 'member') as ConversationMember['role'],
-    }));
-
-    const { error: membersError } = await supabase
+    // 2. Insert creator membership first so creator is officially a member
+    const { error: creatorMemberError } = await supabase
       .from('conversation_members')
-      .insert(memberRows);
+      .insert({
+        conversation_id: convId,
+        user_id: creatorId,
+        role: 'admin',
+        joined_at: now,
+      });
 
-    if (membersError) {
-      console.warn('[conversationService] add members error:', membersError.message);
+    if (creatorMemberError) {
+      console.warn('[conversationService] add creator member error:', creatorMemberError.message);
     }
 
-    const detailed = await conversationService.getConversationById(conversation.id, creatorId);
-    return detailed || {
-      ...conversation,
-      members: [],
-      memberCount: allMemberIds.length,
-    };
+    // 3. Insert other members
+    const otherMemberIds = params.member_ids.filter((id) => id !== creatorId);
+    if (otherMemberIds.length > 0) {
+      const otherMemberRows = otherMemberIds.map((uid) => ({
+        conversation_id: convId,
+        user_id: uid,
+        role: 'member' as const,
+        joined_at: now,
+      }));
+
+      const { error: othersError } = await supabase
+        .from('conversation_members')
+        .insert(otherMemberRows);
+
+      if (othersError) {
+        console.warn('[conversationService] add other members error:', othersError.message);
+      }
+    }
+
+    const allMemberIds = [creatorId, ...otherMemberIds];
+    const detailed = await conversationService.getConversationById(convId, creatorId);
+    return (
+      detailed || {
+        id: convId,
+        type: 'group',
+        name: trimmedName,
+        avatar_url: params.avatar_url || null,
+        created_by: creatorId,
+        created_at: now,
+        updated_at: now,
+        members: [],
+        memberCount: allMemberIds.length,
+      }
+    );
   },
 
   /**
@@ -280,34 +308,45 @@ export const conversationService = {
       }
     }
 
-    // If not found, create new direct conversation
-    const { data: convData, error: convError } = await supabase
+    const convId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    // If not found, create new direct conversation without immediate .select()
+    const { error: convError } = await supabase
       .from('conversations')
       .insert({
+        id: convId,
         type: 'direct' as ConversationType,
         name: null,
         avatar_url: null,
         created_by: creatorId,
-      })
-      .select('*')
-      .single();
+        created_at: now,
+        updated_at: now,
+      });
 
-    if (convError || !convData) {
-      throw new Error(`Không thể bắt đầu cuộc trò chuyện: ${convError?.message}`);
+    if (convError) {
+      throw new Error(`Không thể bắt đầu cuộc trò chuyện: ${convError.message}`);
     }
 
-    const conversation = convData as Conversation;
-
+    // Insert creator first, then recipient
     await supabase.from('conversation_members').insert([
-      { conversation_id: conversation.id, user_id: creatorId, role: 'member' },
-      { conversation_id: conversation.id, user_id: recipientId, role: 'member' },
+      { conversation_id: convId, user_id: creatorId, role: 'member', joined_at: now },
+      { conversation_id: convId, user_id: recipientId, role: 'member', joined_at: now },
     ]);
 
-    const detailed = await conversationService.getConversationById(conversation.id, creatorId);
-    return detailed || {
-      ...conversation,
-      members: [],
-      memberCount: 2,
-    };
+    const detailed = await conversationService.getConversationById(convId, creatorId);
+    return (
+      detailed || {
+        id: convId,
+        type: 'direct',
+        name: null,
+        avatar_url: null,
+        created_by: creatorId,
+        created_at: now,
+        updated_at: now,
+        members: [],
+        memberCount: 2,
+      }
+    );
   },
 };
