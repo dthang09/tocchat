@@ -23,7 +23,12 @@ For each completed module, record:
 
 ## Phase 1 — Foundation and Core Chat
 
-- [ ] Module 01 — Project Foundation
+- [x] Module 01 — Project Foundation
+    - Completed: 2026-09-05
+    - Commit: 3c28092
+    - Branch: main
+    - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
+    - Known limitations: Application shell with feature stubs; Supabase client configured with placeholder fallback until project credentials are provided; no database tables or authentication yet (planned for Modules 02-03).
 - [ ] Module 02 — Core Database Schema
 - [ ] Module 03 — Authentication
 - [ ] Module 04 — User Profiles
