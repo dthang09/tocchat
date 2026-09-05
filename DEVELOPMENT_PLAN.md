@@ -49,7 +49,7 @@ For each completed module, record:
     - Known limitations: Requires 'avatars' storage bucket and policies created in Supabase project to upload avatar images over the network.
 - [x] Module 05 — Conversations
     - Completed: 2026-09-05
-    - Commit: pending
+    - Commit: 683c96a
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
     - Known limitations: Messages do not exist yet (messaging schema planned for Module 06).
