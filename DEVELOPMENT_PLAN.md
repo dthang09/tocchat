@@ -60,6 +60,27 @@ For each completed module, record:
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Notes: Inserted module to provide private friend relationships and real group member selection without fake users or fake presence.
     - Known limitations: Friend request notifications currently in-app; push notifications will be integrated in future notification updates.
+
+### Checkpoint Review — After Module 05
+- Date: 2026-09-05
+- Commit: Pending push
+- Branch: main
+- Modules Reviewed: Module 01 (Project Foundation), Module 02 (Core Schema), Module 03 (Auth), Module 04 (Profiles), Module 05 (Conversations), Inserted Module (Friends & Contacts)
+- Problems Found:
+  1. ProfileScreen & EditProfileScreen lacked username display and input, preventing users from seeing/setting their unique `@username`.
+  2. Friend search query failed on `@` prefix (e.g. `@test_af33`) because usernames in database are stored without `@`.
+  3. Friend search filtered out current user (`.neq('id', currentUserId)`), causing confusion when self-testing usernames.
+  4. PostgreSQL RLS on `profiles` previously restricted SELECT to shared conversations only, blocking user discovery for friend requests.
+  5. Creating a group or direct conversation with `.insert({...}).select('*')` triggered PostgreSQL RLS SELECT violation (`new row violates row-level security policy for table "conversations"`) because creator was not yet in `conversation_members`.
+- Problems Fixed:
+  1. Updated `ProfileScreen` and `EditProfileScreen` to display and allow editing `@username` with validation.
+  2. Fixed `friendService.searchUsers` to strip leading `@` and sanitize input.
+  3. Added `self` relationship status in friend search to show user's own card with a distinct "Tài khoản của bạn" badge.
+  4. Updated RLS policy (`20260905130000_allow_profile_search.sql`) allowing authenticated users to read all profiles for friend discovery.
+  5. Client-side ID generation and inserting conversation without `.select('*')`, adding creator to `conversation_members` before fetching details to prevent chicken-and-egg RLS violation.
+- Validation Results: typecheck ✅ / lint ✅ / build ✅
+- Remaining Risks: Hosted Supabase database must have all SQL migrations executed in SQL Editor to ensure hosted RLS policies match local migrations.
+
 - [ ] Module 06 — Messaging Database Schema
 - [ ] Module 07 — Realtime Text Messaging
 - [ ] Module 08 — Message Replies
