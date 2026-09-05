@@ -43,7 +43,7 @@ For each completed module, record:
     - Known limitations: Real signup/login requires a connected Supabase project with environment variables set. Handled with friendly errors in offline/unconfigured environments.
 - [x] Module 04 — User Profiles
     - Completed: 2026-09-05
-    - Commit: pending
+    - Commit: bd64029
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
     - Known limitations: Requires 'avatars' storage bucket and policies created in Supabase project to upload avatar images over the network.
