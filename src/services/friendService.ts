@@ -3,6 +3,7 @@ import type { Friendship, Profile, FriendshipStatus } from '../types';
 
 export type RelationshipState =
   | 'none'
+  | 'self'
   | 'pending_sent'
   | 'pending_received'
   | 'accepted'
@@ -41,19 +42,36 @@ export const friendService = {
 
   /**
    * Search registered users by username or display name
-   * Does not return the current user
    */
   async searchUsers(query: string, currentUserId: string): Promise<UserSearchResult[]> {
-    const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return [];
+    const rawTrimmed = query.trim();
+    if (!rawTrimmed) return [];
+
+    // Strip leading @ so "@test_af33" searches for "test_af33"
+    const clean = rawTrimmed.replace(/^@+/, '').trim().toLowerCase();
+    if (!clean) return [];
+
+    // Sanitize to prevent breaking PostgREST .or() filter syntax
+    const sanitized = clean.replace(/[,()]/g, '');
+    if (!sanitized) return [];
 
     // Query profiles matching username or display_name
-    const { data: profiles, error } = await supabase
+    let { data: profiles, error } = await supabase
       .from('profiles')
       .select('id, display_name, username, avatar_url, status, created_at, updated_at')
-      .neq('id', currentUserId)
-      .or(`display_name.ilike.%${trimmed}%,username.ilike.%${trimmed}%`)
+      .or(`display_name.ilike.%${sanitized}%,username.ilike.%${sanitized}%`)
       .limit(25);
+
+    if (error && error.code === '42703') {
+      // If username column does not exist yet in database, fallback to display_name only
+      const retry = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, status, created_at, updated_at')
+        .ilike('display_name', `%${sanitized}%`)
+        .limit(25);
+      profiles = (retry.data || []).map((p) => ({ ...p, username: null }));
+      error = retry.error;
+    }
 
     if (error) {
       console.warn('[friendService] searchUsers error:', error.message);
@@ -71,6 +89,14 @@ export const friendService = {
     const existingFriendships = (friendshipsData as Friendship[]) || [];
 
     return (profiles as Profile[]).map((profile) => {
+      // If result is the searching user themselves
+      if (profile.id === currentUserId) {
+        return {
+          profile,
+          relationship: 'self' as RelationshipState,
+        };
+      }
+
       const friendship = existingFriendships.find(
         (f) =>
           (f.user_a_id === profile.id && f.user_b_id === currentUserId) ||

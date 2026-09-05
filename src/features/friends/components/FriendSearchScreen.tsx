@@ -226,7 +226,11 @@ export const FriendSearchScreen: React.FC = () => {
 
                   {/* Relationship Action Button */}
                   <div className="shrink-0 ml-2">
-                    {relationship === 'accepted' ? (
+                    {relationship === 'self' ? (
+                      <span className="px-3 py-1.5 rounded-full bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold select-none">
+                        Tài khoản của bạn
+                      </span>
+                    ) : relationship === 'accepted' ? (
                       <button
                         onClick={() => handleOpenChat(profile.id)}
                         className="px-3 py-1.5 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"

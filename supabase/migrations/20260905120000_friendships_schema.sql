@@ -132,3 +132,12 @@ CREATE POLICY "Participants can delete friendship"
   USING (
     auth.uid() = user_a_id OR auth.uid() = user_b_id
   );
+
+-- 5. PROFILES POLICY UPDATE: Allow authenticated users to search and read all profiles
+DROP POLICY IF EXISTS "Users can read profiles of members in shared conversations" ON profiles;
+DROP POLICY IF EXISTS "Authenticated users can read all profiles" ON profiles;
+CREATE POLICY "Authenticated users can read all profiles"
+  ON profiles FOR SELECT
+  TO authenticated
+  USING (true);
+
