@@ -5,32 +5,56 @@ import { BotsPage } from './pages/BotsPage';
 import { CallsPage } from './pages/CallsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { LoginScreen, RegisterScreen, ProtectedRoute, PublicOnlyRoute } from '../features/auth';
 
 export const router = createBrowserRouter([
+  // Public auth routes (redirects authenticated users away from /login and /register)
   {
-    path: '/',
-    element: <AppShell />,
+    element: <PublicOnlyRoute />,
     children: [
       {
-        index: true,
-        element: <ConversationsPage />,
+        path: '/login',
+        element: <LoginScreen />,
       },
       {
-        path: 'bots',
-        element: <BotsPage />,
-      },
-      {
-        path: 'calls',
-        element: <CallsPage />,
-      },
-      {
-        path: 'settings',
-        element: <SettingsPage />,
-      },
-      {
-        path: '*',
-        element: <NotFoundPage />,
+        path: '/register',
+        element: <RegisterScreen />,
       },
     ],
+  },
+
+  // Protected application routes (requires authentication)
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: '/',
+        element: <AppShell />,
+        children: [
+          {
+            index: true,
+            element: <ConversationsPage />,
+          },
+          {
+            path: 'bots',
+            element: <BotsPage />,
+          },
+          {
+            path: 'calls',
+            element: <CallsPage />,
+          },
+          {
+            path: 'settings',
+            element: <SettingsPage />,
+          },
+        ],
+      },
+    ],
+  },
+
+  // Fallback 404
+  {
+    path: '*',
+    element: <NotFoundPage />,
   },
 ]);

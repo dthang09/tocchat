@@ -2,6 +2,9 @@
  * Shared Type Definitions for TocChat
  */
 
+export * from './database';
+export * from './auth';
+
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 export interface ToastMessage {
@@ -22,16 +25,4 @@ export interface AppState {
   setLoading: (isLoading: boolean, message?: string | null) => void;
   addToast: (toast: Omit<ToastMessage, 'id'>) => string;
   removeToast: (id: string) => void;
-}
-
-/**
- * Placeholder Supabase Database Schema
- * Will be fully populated in Module 02
- */
-export interface Database {
-  public: {
-    Tables: Record<string, never>;
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-  };
 }

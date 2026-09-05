@@ -1,10 +1,34 @@
 import React from 'react';
-import { Palette, Bell, Shield, Info, ChevronRight, Moon, Sun, Smartphone } from 'lucide-react';
+import {
+  Palette,
+  Bell,
+  Shield,
+  Info,
+  ChevronRight,
+  Moon,
+  Sun,
+  Smartphone,
+  LogOut,
+} from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import { useAuth } from '../../features/auth';
 import { cn } from '../../utils/cn';
 
 export const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
+  const { user, profile, signOut, isLoading } = useAuth();
+
+  const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Thành viên TocChat';
+  const initial = (displayName[0] || 'T').toUpperCase();
+  const userEmail = user?.email || 'Chưa cập nhật email';
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+  };
 
   return (
     <div className="flex flex-col flex-1 pb-6">
@@ -18,18 +42,18 @@ export const SettingsPage: React.FC = () => {
       <div className="px-4 space-y-4 pt-2">
         {/* User Profile Card (Messenger mobile pattern) */}
         <div className="flex items-center gap-3.5 p-3.5 bg-slate-50 dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 cursor-pointer active:scale-98 transition-all">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-sky-400 text-white font-bold text-xl flex items-center justify-center shadow-xs">
-            T
+          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-sky-400 text-white font-bold text-xl flex items-center justify-center shadow-xs shrink-0">
+            {initial}
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
-              Thành viên TocChat
+              {displayName}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-              Chạm để quản lý trang cá nhân
+              {userEmail}
             </p>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
         </div>
 
         {/* Section: Tùy chỉnh hiển thị */}
@@ -115,19 +139,36 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Section: Thông tin ứng dụng */}
+        {/* Section: Ứng dụng & Tài khoản */}
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 mb-2">
-            Ứng dụng
+            Tài khoản
           </h3>
-          <div className="bg-slate-50 dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-3.5 flex items-center justify-between min-h-[52px]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
-                <Info className="w-4 h-4" />
+          <div className="bg-slate-50 dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden">
+            <div className="flex items-center justify-between p-3.5 min-h-[52px]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                  <Info className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Phiên bản</span>
               </div>
-              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Phiên bản</span>
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">1.0.0</span>
             </div>
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">1.0.0</span>
+
+            <button
+              onClick={handleLogout}
+              disabled={isLoading}
+              className="w-full flex items-center justify-between p-3.5 min-h-[52px] cursor-pointer hover:bg-rose-50/60 dark:hover:bg-rose-950/20 active:bg-rose-100/50 dark:active:bg-rose-950/40 transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-medium text-rose-600 dark:text-rose-400">
+                  {isLoading ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                </span>
+              </div>
+            </button>
           </div>
         </div>
       </div>

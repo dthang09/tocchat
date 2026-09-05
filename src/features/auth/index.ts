@@ -1,6 +1,12 @@
 /**
  * Feature: auth
- * Planned in: Module 03 — Authentication
- * TODO: Implement in upcoming phase modules.
+ * Module 03 — Authentication
  */
-export {};
+
+export * from './services/authService';
+export * from './hooks/useAuth';
+export * from '../../stores/authStore';
+export * from './components/LoginScreen';
+export * from './components/RegisterScreen';
+export * from './components/ProtectedRoute';
+export * from './components/PublicOnlyRoute';

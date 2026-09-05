@@ -35,7 +35,12 @@ For each completed module, record:
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
     - Known limitations: Local migrations only, not applied to a hosted database yet.
-- [ ] Module 03 — Authentication
+- [x] Module 03 — Authentication
+    - Completed: 2026-09-05
+    - Commit: pending
+    - Branch: main
+    - Checks: typecheck ✅ / lint ✅ / tests ✅ / build ✅
+    - Known limitations: Real signup/login requires a connected Supabase project with environment variables set. Handled with friendly errors in offline/unconfigured environments.
 - [ ] Module 04 — User Profiles
 - [ ] Module 05 — Conversations
 - [ ] Module 06 — Messaging Database Schema
