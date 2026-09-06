@@ -52,6 +52,56 @@ export type Friendship = {
   updated_at: string;
 };
 
+export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'file' | 'sticker' | 'link' | 'system' | 'bot';
+
+export type Message = {
+  id: string;
+  conversation_id: string;
+  sender_id: string | null;
+  type: MessageType;
+  content: string | null;
+  reply_to_message_id: string | null;
+  created_at: string;
+  edited_at: string | null;
+  deleted_at: string | null;
+  metadata: Json | null;
+};
+
+export type Attachment = {
+  id: string;
+  message_id: string;
+  storage_path: string;
+  thumbnail_path: string | null;
+  file_name: string;
+  mime_type: string | null;
+  file_size: number | null;
+  width: number | null;
+  height: number | null;
+  duration: number | null;
+  metadata: Json | null;
+  created_at: string;
+};
+
+export type MessageReaction = {
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+};
+
+export type MessageRead = {
+  message_id: string;
+  user_id: string;
+  read_at: string;
+};
+
+export type PinnedMessage = {
+  conversation_id: string;
+  message_id: string;
+  pinned_by: string | null;
+  pinned_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -136,6 +186,112 @@ export type Database = {
           requested_by?: string;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      messages: {
+        Row: Message;
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          sender_id?: string | null;
+          type?: MessageType;
+          content?: string | null;
+          reply_to_message_id?: string | null;
+          created_at?: string;
+          edited_at?: string | null;
+          deleted_at?: string | null;
+          metadata?: Json | null;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          sender_id?: string | null;
+          type?: MessageType;
+          content?: string | null;
+          reply_to_message_id?: string | null;
+          created_at?: string;
+          edited_at?: string | null;
+          deleted_at?: string | null;
+          metadata?: Json | null;
+        };
+        Relationships: [];
+      };
+      attachments: {
+        Row: Attachment;
+        Insert: {
+          id?: string;
+          message_id: string;
+          storage_path: string;
+          thumbnail_path?: string | null;
+          file_name: string;
+          mime_type?: string | null;
+          file_size?: number | null;
+          width?: number | null;
+          height?: number | null;
+          duration?: number | null;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          message_id?: string;
+          storage_path?: string;
+          thumbnail_path?: string | null;
+          file_name?: string;
+          mime_type?: string | null;
+          file_size?: number | null;
+          width?: number | null;
+          height?: number | null;
+          duration?: number | null;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      message_reactions: {
+        Row: MessageReaction;
+        Insert: {
+          message_id: string;
+          user_id: string;
+          emoji: string;
+          created_at?: string;
+        };
+        Update: {
+          message_id?: string;
+          user_id?: string;
+          emoji?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      message_reads: {
+        Row: MessageRead;
+        Insert: {
+          message_id: string;
+          user_id: string;
+          read_at?: string;
+        };
+        Update: {
+          message_id?: string;
+          user_id?: string;
+          read_at?: string;
+        };
+        Relationships: [];
+      };
+      pinned_messages: {
+        Row: PinnedMessage;
+        Insert: {
+          conversation_id: string;
+          message_id: string;
+          pinned_by?: string | null;
+          pinned_at?: string;
+        };
+        Update: {
+          conversation_id?: string;
+          message_id?: string;
+          pinned_by?: string | null;
+          pinned_at?: string;
         };
         Relationships: [];
       };

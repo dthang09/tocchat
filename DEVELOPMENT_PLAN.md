@@ -81,7 +81,12 @@ For each completed module, record:
 - Validation Results: typecheck ✅ / lint ✅ / build ✅
 - Remaining Risks: Hosted Supabase database must have all SQL migrations executed in SQL Editor to ensure hosted RLS policies match local migrations.
 
-- [ ] Module 06 — Messaging Database Schema
+- [x] Module 06 — Messaging Database Schema
+    - Completed: 2026-09-06
+    - Commit: pending
+    - Branch: main
+    - Checks: typecheck ✅ / lint ✅ / build ✅
+    - Known limitations: Local migrations only. Supabase CLI unavailable, so Typescript types for messaging tables were updated manually in database.ts.
 - [ ] Module 07 — Realtime Text Messaging
 - [ ] Module 08 — Message Replies
 - [ ] Module 09 — Message Reactions
