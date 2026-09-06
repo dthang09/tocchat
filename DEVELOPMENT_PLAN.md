@@ -112,7 +112,7 @@ For each completed module, record:
     - Checks: typecheck ✅ / lint ✅ / build ✅
 - [x] Module 11 — Typing Indicators and Presence
     - Completed: 2026-09-06
-    - Commit: pending
+    - Commit: df0745a
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Known limitations: Ephemeral Supabase Realtime Broadcast for typing (debounced, throttled at 2s, 2.5s idle auto-expire, 3.5s safety cleanup, zero DB writes); Supabase Presence for real-time online/offline indicators across conversations and contacts.
