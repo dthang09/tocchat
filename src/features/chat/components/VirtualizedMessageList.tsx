@@ -13,8 +13,11 @@ interface VirtualizedMessageListProps {
   conversationAvatar?: string | null;
   isLoadingOlder: boolean;
   hasMore: boolean;
+  highlightedMessageId?: string | null;
   onLoadOlder: () => Promise<boolean>;
   onRetryMessage?: (messageId: string) => void;
+  onReplyMessage?: (message: ChatMessage) => void;
+  onJumpToMessage?: (messageId: string) => void;
 }
 
 const isSameDay = (d1: string, d2: string): boolean => {
@@ -36,8 +39,11 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
   conversationAvatar,
   isLoadingOlder,
   hasMore,
+  highlightedMessageId,
   onLoadOlder,
   onRetryMessage,
+  onReplyMessage,
+  onJumpToMessage,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
@@ -124,7 +130,6 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
 
     // Trigger backward pagination when scrolled near top
     if (el.scrollTop < 80 && hasMore && !isLoadingOlder && !isPrependingRef.current) {
-      // Record heights before fetch
       scrollHeightBeforeRef.current = el.scrollHeight;
       scrollTopBeforeRef.current = el.scrollTop;
       isPrependingRef.current = true;
@@ -199,7 +204,10 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
                 isLastInGroup={isLastInGroup}
                 isGroupConversation={isGroupConversation}
                 showDateSeparator={showDateSeparator}
+                isHighlighted={msg.id === highlightedMessageId}
                 onRetry={onRetryMessage}
+                onReply={onReplyMessage}
+                onJumpToMessage={onJumpToMessage}
               />
             );
           })}
@@ -213,7 +221,7 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
       {showScrollBottom && (
         <button
           onClick={() => scrollToBottom(true)}
-          className="absolute bottom-3 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 text-xs font-semibold shadow-lg shadow-black/10 border border-slate-200/80 dark:border-slate-700 active:scale-95 transition-all"
+          className="absolute bottom-3 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 text-xs font-semibold shadow-lg shadow-black/10 border border-slate-200/80 dark:border-slate-700 active:scale-95 transition-all cursor-pointer"
         >
           {hasNewUnseenMessage && (
             <span className="w-2 h-2 rounded-full bg-brand-500 animate-ping" />

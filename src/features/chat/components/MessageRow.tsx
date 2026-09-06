@@ -12,7 +12,10 @@ export interface MessageRowProps {
   isLastInGroup: boolean;
   isGroupConversation: boolean;
   showDateSeparator: boolean;
+  isHighlighted?: boolean;
   onRetry?: (messageId: string) => void;
+  onReply?: (message: ChatMessage) => void;
+  onJumpToMessage?: (messageId: string) => void;
 }
 
 const MessageRowComponent: React.FC<MessageRowProps> = ({
@@ -22,13 +25,16 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
   isLastInGroup,
   isGroupConversation,
   showDateSeparator,
+  isHighlighted = false,
   onRetry,
+  onReply,
+  onJumpToMessage,
 }) => {
   const senderName = message.sender?.display_name || 'Người dùng';
   const senderAvatar = message.sender?.avatar_url;
 
   return (
-    <div className="flex flex-col w-full">
+    <div id={`msg-${message.id}`} className="flex flex-col w-full scroll-mt-20">
       {/* Date Separator */}
       {showDateSeparator && <DateSeparator dateString={message.created_at} />}
 
@@ -68,7 +74,10 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
           <MessageBubble
             message={message}
             isCurrentUser={isCurrentUser}
+            isHighlighted={isHighlighted}
             onRetry={onRetry}
+            onReply={onReply}
+            onJumpToMessage={onJumpToMessage}
             showTimestamp={isLastInGroup}
           />
         </div>
@@ -83,11 +92,14 @@ export const MessageRow = React.memo(MessageRowComponent, (prevProps, nextProps)
     prevProps.message.content === nextProps.message.content &&
     prevProps.message.status === nextProps.message.status &&
     prevProps.message.created_at === nextProps.message.created_at &&
+    prevProps.message.reply_to_message_id === nextProps.message.reply_to_message_id &&
+    prevProps.message.reply_to?.content === nextProps.message.reply_to?.content &&
     prevProps.isCurrentUser === nextProps.isCurrentUser &&
     prevProps.isFirstInGroup === nextProps.isFirstInGroup &&
     prevProps.isLastInGroup === nextProps.isLastInGroup &&
     prevProps.isGroupConversation === nextProps.isGroupConversation &&
-    prevProps.showDateSeparator === nextProps.showDateSeparator
+    prevProps.showDateSeparator === nextProps.showDateSeparator &&
+    prevProps.isHighlighted === nextProps.isHighlighted
   );
 });
 

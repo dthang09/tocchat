@@ -76,16 +76,21 @@ export const ChatScreen: React.FC = () => {
     return map;
   }, [conversation?.members]);
 
-  // 3. Connect messages hook
+  // 3. Connect messages hook with replies and jump-to support
   const {
     messages,
     isLoading: isMessagesLoading,
     isLoadingOlder,
     hasMore,
     error: messagesError,
+    replyingTo,
+    highlightedMessageId,
     sendMessage,
     retryMessage,
     loadOlderMessages,
+    startReply,
+    cancelReply,
+    jumpToMessage,
   } = useChatMessages({
     conversationId: conversationId || '',
     currentUserId: user?.id,
@@ -116,7 +121,7 @@ export const ChatScreen: React.FC = () => {
         </p>
         <button
           onClick={() => navigate('/')}
-          className="px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
+          className="px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"
         >
           Quay lại danh sách
         </button>
@@ -216,14 +221,19 @@ export const ChatScreen: React.FC = () => {
           conversationAvatar={avatarUrl}
           isLoadingOlder={isLoadingOlder}
           hasMore={hasMore}
+          highlightedMessageId={highlightedMessageId}
           onLoadOlder={loadOlderMessages}
           onRetryMessage={retryMessage}
+          onReplyMessage={startReply}
+          onJumpToMessage={jumpToMessage}
         />
       )}
 
-      {/* Message Composer Footer */}
+      {/* Message Composer Footer with Reply Preview & Cancel */}
       <MessageComposer
         onSendMessage={sendMessage}
+        replyingTo={replyingTo}
+        onCancelReply={cancelReply}
         disabled={!user}
         placeholder="Nhập tin nhắn..."
       />
