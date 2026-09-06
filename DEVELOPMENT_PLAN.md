@@ -117,6 +117,27 @@ For each completed module, record:
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Known limitations: Ephemeral Supabase Realtime Broadcast for typing (debounced, throttled at 2s, 2.5s idle auto-expire, 3.5s safety cleanup, zero DB writes); Supabase Presence for real-time online/offline indicators across conversations and contacts.
 
+### Checkpoint Review — After Module 11
+- Date: 2026-09-06
+- Commit: Pending push
+- Branch: main
+- Modules Reviewed: Modules 06-11 (Messaging, Realtime, Replies, Reactions, Read Receipts, Typing/Presence).
+- Earlier Modules Regression-Tested: Modules 01-05 (Auth, Profiles, Friendships, Conversations).
+- Architecture Findings: Client-side architecture is stable and handles realtime events without unnecessary renders.
+- Database Findings: Migrations are valid. Added REPLICA IDENTITY FULL to messages table for correct Realtime payloads on updates/deletes.
+- RLS/Security Findings: Identified and fixed critical IDOR in `conversation_members` INSERT policy that allowed users to add themselves to any conversation. Hardened UPDATE/DELETE policies for `messages`, `friendships`, and `conversations`.
+- Realtime Findings: Typing indicators use ephemeral Broadcast properly. Subscription lifetimes managed correctly via component unmount.
+- UI/Mobile Findings: Layout is constrained to `max-w-3xl` and `w-full`, working well across all mobile standard viewports (390x844 etc). Safe area insets handled for header/footer.
+- Bugs Found:
+  1. Unauthorized self-join vulnerability via `conversation_members` INSERT.
+  2. Blocked users could bypass block by deleting the friendship row.
+  3. Message UPDATE/DELETE allowed altering `conversation_id`.
+- Bugs Fixed:
+  1. Created `20260906040000_checkpoint_rls_fixes.sql` fixing all identified RLS vulnerabilities.
+- Remaining Risks: Migrations must be run on the hosted Supabase instance.
+- Validation Results: typecheck ✅ / lint ✅ / build ✅
+- Manual Multi-User Test Result: Passed (Users can chat, react, see typing/presence, and read receipts correctly without leaking to other channels).
+
 ### Phase 1 acceptance milestone
 
 At the end of Module 11, at least 2–3 accounts should be able to:
