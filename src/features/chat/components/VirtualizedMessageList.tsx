@@ -211,6 +211,7 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
 
             const isFirstInGroup = !isSameSenderAsPrev || !isSameDayAsPrev;
             const isLastInGroup = !isSameSenderAsNext || !isSameDayAsNext;
+            const isLatestMessage = index === messages.length - 1;
             const showDateSeparator = index === 0 || !isSameDayAsPrev;
 
             return (
@@ -220,6 +221,7 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
                 isCurrentUser={isCurrentUser}
                 isFirstInGroup={isFirstInGroup}
                 isLastInGroup={isLastInGroup}
+                isLatestMessage={isLatestMessage}
                 isGroupConversation={isGroupConversation}
                 showDateSeparator={showDateSeparator}
                 isHighlighted={msg.id === highlightedMessageId}

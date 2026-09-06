@@ -41,6 +41,14 @@ export interface ReadReceiptUser {
   read_at: string;
 }
 
+export interface ReadReceiptBroadcastPayload {
+  userId: string;
+  userName: string;
+  avatarUrl?: string | null;
+  messageIds: string[];
+  readAt: string;
+}
+
 export interface TypingBroadcastPayload {
   userId: string;
   userName: string;

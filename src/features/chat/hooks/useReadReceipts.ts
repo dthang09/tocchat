@@ -5,12 +5,16 @@ import type { ChatMessage, ReadReceiptUser } from '../types';
 interface UseReadReceiptsProps {
   conversationId: string;
   currentUserId?: string;
+  currentUserName?: string;
+  currentUserAvatar?: string | null;
   messages: ChatMessage[];
 }
 
 export function useReadReceipts({
   conversationId,
   currentUserId,
+  currentUserName = 'Người dùng',
+  currentUserAvatar = null,
   messages,
 }: UseReadReceiptsProps) {
   // Track active window/tab visibility (tab is visible and not hidden)
@@ -54,10 +58,20 @@ export function useReadReceipts({
       markedReadIdsRef.current.add(id);
     }
 
+    // 1. Persist to PostgreSQL database
     messageService.markMessagesAsRead(idsToMark, currentUserId).catch((err) => {
       console.warn('[useReadReceipts] Batch mark read error:', err);
     });
-  }, [currentUserId]);
+
+    // 2. Broadcast immediately over WebSocket to peers in this conversation
+    messageService.sendReadReceiptBroadcast(conversationId, {
+      userId: currentUserId,
+      userName: currentUserName,
+      avatarUrl: currentUserAvatar,
+      messageIds: idsToMark,
+      readAt: new Date().toISOString(),
+    });
+  }, [conversationId, currentUserId, currentUserName, currentUserAvatar]);
 
   // 3. Queue unread messages when conversation is actively visible
   useEffect(() => {

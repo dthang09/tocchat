@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { messageService } from '../../../services/messageService';
 import { useReadReceipts } from './useReadReceipts';
 import { useTyping } from './useTyping';
-import type { ChatMessage, ChatSender, ReplyPreview, ReactionGroup, ReactionUser, ReadReceiptUser } from '../types';
+import type { ChatMessage, ChatSender, ReplyPreview, ReactionGroup, ReactionUser, ReadReceiptUser, ReadReceiptBroadcastPayload } from '../types';
 import type { Message, MessageReaction, MessageRead } from '../../../types';
 
 interface UseChatMessagesProps {
@@ -179,6 +179,32 @@ export function useChatMessages({
         if (prev.some((m) => m.id === formatted.id)) {
           return prev;
         }
+
+        // If another member sent a message, they have seen previous messages from current user!
+        if (formatted.sender_id && formatted.sender_id !== currentUserId) {
+          const readerId = formatted.sender_id;
+          const readerName = formatted.sender?.display_name || 'Người dùng';
+          const readerAvatar = formatted.sender?.avatar_url || null;
+          const autoRead: ReadReceiptUser = {
+            user_id: readerId,
+            user_name: readerName,
+            avatar_url: readerAvatar,
+            read_at: formatted.created_at,
+          };
+
+          const updatedPrev = prev.map((m) => {
+            if (m.sender_id === currentUserId && !m.reads?.some((r) => r.user_id === readerId)) {
+              return {
+                ...m,
+                reads: [...(m.reads || []), autoRead],
+              };
+            }
+            return m;
+          });
+
+          return [...updatedPrev, formatted];
+        }
+
         return [...prev, formatted];
       });
     };
@@ -337,11 +363,35 @@ export function useChatMessages({
       );
     };
 
+    const handleReadReceiptBroadcast = (payload: ReadReceiptBroadcastPayload) => {
+      if (!payload || !payload.userId || payload.userId === currentUserId) return;
+
+      const idSet = new Set(payload.messageIds);
+      const newRead: ReadReceiptUser = {
+        user_id: payload.userId,
+        user_name: payload.userName || 'Người dùng',
+        avatar_url: payload.avatarUrl || null,
+        read_at: payload.readAt,
+      };
+
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (!idSet.has(msg.id)) return msg;
+          if (msg.reads?.some((r) => r.user_id === payload.userId)) return msg;
+          return {
+            ...msg,
+            reads: [...(msg.reads || []), newRead],
+          };
+        })
+      );
+    };
+
     const unsubscribe = messageService.subscribeToConversation(conversationId, {
       onNewMessage: handleIncomingMessage,
       onReactionInsert: handleReactionInsert,
       onReactionDelete: handleReactionDelete,
       onReadReceipt: handleReadReceipt,
+      onReadReceiptBroadcast: handleReadReceiptBroadcast,
       onTyping: handleIncomingTyping,
     });
 
@@ -645,6 +695,8 @@ export function useChatMessages({
   const { readersByMessageId, isActivelyVisible } = useReadReceipts({
     conversationId,
     currentUserId,
+    currentUserName: currentUserProfile?.display_name || 'Người dùng',
+    currentUserAvatar: currentUserProfile?.avatar_url,
     messages,
   });
 

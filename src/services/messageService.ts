@@ -9,6 +9,7 @@ import type {
   ReactionGroup,
   ReactionUser,
   ReadReceiptUser,
+  ReadReceiptBroadcastPayload,
   TypingBroadcastPayload,
 } from '../features/chat/types';
 
@@ -469,6 +470,7 @@ export const messageService = {
       onReactionInsert?: (reaction: MessageReaction) => void;
       onReactionDelete?: (reaction: MessageReaction) => void;
       onReadReceipt?: (read: MessageRead) => void;
+      onReadReceiptBroadcast?: (payload: ReadReceiptBroadcastPayload) => void;
       onTyping?: (payload: TypingBroadcastPayload) => void;
     }
   ): () => void {
@@ -531,6 +533,15 @@ export const messageService = {
       )
       .on(
         'broadcast',
+        { event: 'read_receipt' },
+        ({ payload }) => {
+          if (payload && callbacks.onReadReceiptBroadcast) {
+            callbacks.onReadReceiptBroadcast(payload as ReadReceiptBroadcastPayload);
+          }
+        }
+      )
+      .on(
+        'broadcast',
         { event: 'typing' },
         ({ payload }) => {
           if (payload && callbacks.onTyping) {
@@ -546,6 +557,25 @@ export const messageService = {
       activeConversationChannels.delete(conversationId);
       supabase.removeChannel(channel);
     };
+  },
+
+  /**
+   * Broadcast read receipt status via Supabase Realtime Broadcast (instant WebSocket peer-to-peer delivery)
+   */
+  sendReadReceiptBroadcast(
+    conversationId: string,
+    payload: ReadReceiptBroadcastPayload
+  ): void {
+    const channel = activeConversationChannels.get(conversationId);
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'read_receipt',
+        payload,
+      }).catch((err) => {
+        console.warn('[messageService] sendReadReceiptBroadcast error:', err);
+      });
+    }
   },
 
   /**

@@ -12,6 +12,7 @@ export interface MessageRowProps {
   isCurrentUser: boolean;
   isFirstInGroup: boolean;
   isLastInGroup: boolean;
+  isLatestMessage?: boolean;
   isGroupConversation: boolean;
   showDateSeparator: boolean;
   isHighlighted?: boolean;
@@ -28,6 +29,7 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
   isCurrentUser,
   isFirstInGroup,
   isLastInGroup,
+  isLatestMessage = false,
   isGroupConversation,
   showDateSeparator,
   isHighlighted = false,
@@ -96,7 +98,7 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
       {/* Read Receipts or Sent Status Indicator under message */}
       {readers.length > 0 ? (
         <ReadReceiptsList readers={readers} isCurrentUser={isCurrentUser} />
-      ) : isCurrentUser && isLastInGroup && message.status === 'sent' ? (
+      ) : isCurrentUser && isLatestMessage && message.status === 'sent' ? (
         <div className="flex justify-end pr-1 mt-0.5 mb-1 select-none">
           <div
             className="w-3.5 h-3.5 rounded-full bg-slate-300 dark:bg-slate-700 text-white dark:text-slate-200 flex items-center justify-center shadow-2xs"
@@ -123,6 +125,7 @@ export const MessageRow = React.memo(MessageRowComponent, (prevProps, nextProps)
     prevProps.isCurrentUser === nextProps.isCurrentUser &&
     prevProps.isFirstInGroup === nextProps.isFirstInGroup &&
     prevProps.isLastInGroup === nextProps.isLastInGroup &&
+    prevProps.isLatestMessage === nextProps.isLatestMessage &&
     prevProps.isGroupConversation === nextProps.isGroupConversation &&
     prevProps.showDateSeparator === nextProps.showDateSeparator &&
     prevProps.isHighlighted === nextProps.isHighlighted
