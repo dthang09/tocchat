@@ -83,7 +83,7 @@ For each completed module, record:
 
 - [x] Module 06 — Messaging Database Schema
     - Completed: 2026-09-06
-    - Commit: pending
+    - Commit: 09882d3
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Known limitations: Local migrations only. Supabase CLI unavailable, so Typescript types for messaging tables were updated manually in database.ts.
