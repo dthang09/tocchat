@@ -13,9 +13,9 @@ export function useReadReceipts({
   currentUserId,
   messages,
 }: UseReadReceiptsProps) {
-  // Track active window/tab visibility
+  // Track active window/tab visibility (tab is visible and not hidden)
   const [isActivelyVisible, setIsActivelyVisible] = useState<boolean>(() => {
-    return typeof document !== 'undefined' && document.visibilityState === 'visible' && document.hasFocus();
+    return typeof document !== 'undefined' && document.visibilityState === 'visible';
   });
 
   // Track message IDs already marked as read in this session to prevent repeated requests
@@ -25,21 +25,21 @@ export function useReadReceipts({
   const pendingQueueRef = useRef<Set<string>>(new Set());
   const flushTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 1. Monitor tab visibility and focus
+  // 1. Monitor tab visibility and user interaction
   useEffect(() => {
-    const handleVisibilityOrFocusChange = () => {
-      const active = document.visibilityState === 'visible' && document.hasFocus();
+    const handleVisibilityOrInteraction = () => {
+      const active = typeof document !== 'undefined' && document.visibilityState === 'visible';
       setIsActivelyVisible(active);
     };
 
-    window.addEventListener('visibilitychange', handleVisibilityOrFocusChange);
-    window.addEventListener('focus', handleVisibilityOrFocusChange);
-    window.addEventListener('blur', handleVisibilityOrFocusChange);
+    window.addEventListener('visibilitychange', handleVisibilityOrInteraction);
+    window.addEventListener('focus', handleVisibilityOrInteraction);
+    window.addEventListener('click', handleVisibilityOrInteraction);
 
     return () => {
-      window.removeEventListener('visibilitychange', handleVisibilityOrFocusChange);
-      window.removeEventListener('focus', handleVisibilityOrFocusChange);
-      window.removeEventListener('blur', handleVisibilityOrFocusChange);
+      window.removeEventListener('visibilitychange', handleVisibilityOrInteraction);
+      window.removeEventListener('focus', handleVisibilityOrInteraction);
+      window.removeEventListener('click', handleVisibilityOrInteraction);
     };
   }, []);
 
@@ -80,13 +80,13 @@ export function useReadReceipts({
     }
 
     if (hasNewToMark) {
-      // Debounce batch flush by 500ms
+      // Debounce batch flush by 200ms
       if (flushTimeoutRef.current) {
         clearTimeout(flushTimeoutRef.current);
       }
       flushTimeoutRef.current = setTimeout(() => {
         flushBatch();
-      }, 500);
+      }, 200);
     }
 
     return () => {

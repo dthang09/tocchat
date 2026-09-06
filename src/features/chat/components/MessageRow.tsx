@@ -4,6 +4,7 @@ import { MessageBubble } from './MessageBubble';
 import { DateSeparator } from './DateSeparator';
 import { ReadReceiptsList } from './ReadReceiptsList';
 import { Avatar } from '../../../components/ui/Avatar';
+import { Check } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 
 export interface MessageRowProps {
@@ -92,10 +93,19 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
         </div>
       </div>
 
-      {/* Read Receipts Clustered Avatars under the message */}
-      {readers.length > 0 && (
+      {/* Read Receipts or Sent Status Indicator under message */}
+      {readers.length > 0 ? (
         <ReadReceiptsList readers={readers} isCurrentUser={isCurrentUser} />
-      )}
+      ) : isCurrentUser && isLastInGroup && message.status === 'sent' ? (
+        <div className="flex justify-end pr-1 mt-0.5 mb-1 select-none">
+          <div
+            className="w-3.5 h-3.5 rounded-full bg-slate-300 dark:bg-slate-700 text-white dark:text-slate-200 flex items-center justify-center shadow-2xs"
+            title="Đã gửi (chờ người nhận xem)"
+          >
+            <Check className="w-2.5 h-2.5 stroke-[2.5]" />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

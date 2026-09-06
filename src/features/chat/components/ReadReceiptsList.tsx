@@ -33,13 +33,13 @@ export const ReadReceiptsList: React.FC<ReadReceiptsListProps> = React.memo(
           {readers.slice(0, 5).map((reader) => (
             <div
               key={reader.user_id}
-              className="w-3.5 h-3.5 rounded-full ring-1 ring-white dark:ring-slate-900 overflow-hidden shadow-2xs hover:scale-125 transition-transform"
+              className="w-4 h-4 rounded-full ring-1.5 ring-white dark:ring-slate-900 overflow-hidden shadow-2xs hover:scale-125 transition-transform"
             >
               <Avatar
                 src={reader.avatar_url}
                 name={reader.user_name}
                 size="xs"
-                className="w-full h-full text-[7px]"
+                className="w-full h-full text-[8px]"
               />
             </div>
           ))}

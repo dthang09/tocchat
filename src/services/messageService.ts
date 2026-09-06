@@ -514,7 +514,7 @@ export const messageService = {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'message_reads',
         },

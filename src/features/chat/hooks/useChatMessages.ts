@@ -279,7 +279,7 @@ export function useChatMessages({
       );
     };
 
-    const handleReadReceipt = (rd: MessageRead) => {
+    const handleReadReceipt = async (rd: MessageRead) => {
       const targetMsg = messagesRef.current.find((m) => m.id === rd.message_id);
       if (!targetMsg) return;
 
@@ -291,6 +291,12 @@ export function useChatMessages({
       } else if (membersMapRef.current[rd.user_id]) {
         userName = membersMapRef.current[rd.user_id].display_name || 'Người dùng';
         avatarUrl = membersMapRef.current[rd.user_id].avatar_url || null;
+      } else {
+        const p = await messageService.getSenderProfile(rd.user_id);
+        if (p) {
+          userName = p.display_name || 'Người dùng';
+          avatarUrl = p.avatar_url || null;
+        }
       }
 
       setMessages((prev) =>
