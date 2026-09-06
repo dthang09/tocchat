@@ -101,7 +101,7 @@ For each completed module, record:
     - Known limitations: Text replies supported with quote jump-to and swipe/long-press gestures; message reactions, read receipts, and typing indicators are planned for Modules 09-11.
 - [x] Module 09 — Message Reactions
     - Completed: 2026-09-06
-    - Commit: pending
+    - Commit: 475b425
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Known limitations: Quick reactions (❤️ 😂 👍 😢 😡 😮) supported with long-press/hover picker, grouped count pills, reaction viewer modal, and realtime synchronization; read receipts and typing indicators are planned for Modules 10-11.
