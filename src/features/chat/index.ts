@@ -3,6 +3,7 @@
  * Module 07 — Realtime Text Messaging
  * Module 08 — Message Replies
  * Module 09 — Message Reactions
+ * Module 10 — Read Receipts
  */
 
 export * from './types';
@@ -15,5 +16,7 @@ export * from './components/VirtualizedMessageList';
 export * from './components/ReactionPicker';
 export * from './components/ReactionPill';
 export * from './components/ReactionViewerModal';
+export * from './components/ReadReceiptsList';
 export * from './hooks/useChatMessages';
+export * from './hooks/useReadReceipts';
 export { messageService } from '../../services/messageService';

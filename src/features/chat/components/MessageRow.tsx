@@ -1,7 +1,8 @@
 import React from 'react';
-import type { ChatMessage } from '../types';
+import type { ChatMessage, ReadReceiptUser } from '../types';
 import { MessageBubble } from './MessageBubble';
 import { DateSeparator } from './DateSeparator';
+import { ReadReceiptsList } from './ReadReceiptsList';
 import { Avatar } from '../../../components/ui/Avatar';
 import { cn } from '../../../utils/cn';
 
@@ -13,6 +14,7 @@ export interface MessageRowProps {
   isGroupConversation: boolean;
   showDateSeparator: boolean;
   isHighlighted?: boolean;
+  readers?: ReadReceiptUser[];
   onRetry?: (messageId: string) => void;
   onReply?: (message: ChatMessage) => void;
   onJumpToMessage?: (messageId: string) => void;
@@ -28,6 +30,7 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
   isGroupConversation,
   showDateSeparator,
   isHighlighted = false,
+  readers = [],
   onRetry,
   onReply,
   onJumpToMessage,
@@ -88,6 +91,11 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
           />
         </div>
       </div>
+
+      {/* Read Receipts Clustered Avatars under the message */}
+      {readers.length > 0 && (
+        <ReadReceiptsList readers={readers} isCurrentUser={isCurrentUser} />
+      )}
     </div>
   );
 };
@@ -101,6 +109,7 @@ export const MessageRow = React.memo(MessageRowComponent, (prevProps, nextProps)
     prevProps.message.reply_to_message_id === nextProps.message.reply_to_message_id &&
     prevProps.message.reply_to?.content === nextProps.message.reply_to?.content &&
     prevProps.message.reactions === nextProps.message.reactions &&
+    prevProps.readers === nextProps.readers &&
     prevProps.isCurrentUser === nextProps.isCurrentUser &&
     prevProps.isFirstInGroup === nextProps.isFirstInGroup &&
     prevProps.isLastInGroup === nextProps.isLastInGroup &&

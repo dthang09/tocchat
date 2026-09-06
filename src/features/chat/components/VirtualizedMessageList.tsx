@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback, useLayoutEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import type { ChatMessage } from '../types';
+import type { ChatMessage, ReadReceiptUser } from '../types';
 import { MessageRow } from './MessageRow';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Avatar } from '../../../components/ui/Avatar';
@@ -14,6 +14,7 @@ interface VirtualizedMessageListProps {
   isLoadingOlder: boolean;
   hasMore: boolean;
   highlightedMessageId?: string | null;
+  readersByMessageId?: Record<string, ReadReceiptUser[]>;
   onLoadOlder: () => Promise<boolean>;
   onRetryMessage?: (messageId: string) => void;
   onReplyMessage?: (message: ChatMessage) => void;
@@ -42,6 +43,7 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
   isLoadingOlder,
   hasMore,
   highlightedMessageId,
+  readersByMessageId,
   onLoadOlder,
   onRetryMessage,
   onReplyMessage,
@@ -209,6 +211,7 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
                 isGroupConversation={isGroupConversation}
                 showDateSeparator={showDateSeparator}
                 isHighlighted={msg.id === highlightedMessageId}
+                readers={readersByMessageId?.[msg.id]}
                 onRetry={onRetryMessage}
                 onReply={onReplyMessage}
                 onJumpToMessage={onJumpToMessage}

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { messageService } from '../../../services/messageService';
-import type { ChatMessage, ChatSender, ReplyPreview, ReactionGroup, ReactionUser } from '../types';
-import type { Message, MessageReaction } from '../../../types';
+import { useReadReceipts } from './useReadReceipts';
+import type { ChatMessage, ChatSender, ReplyPreview, ReactionGroup, ReactionUser, ReadReceiptUser } from '../types';
+import type { Message, MessageReaction, MessageRead } from '../../../types';
 
 interface UseChatMessagesProps {
   conversationId: string;
@@ -278,10 +279,48 @@ export function useChatMessages({
       );
     };
 
+    const handleReadReceipt = (rd: MessageRead) => {
+      const targetMsg = messagesRef.current.find((m) => m.id === rd.message_id);
+      if (!targetMsg) return;
+
+      let userName = 'Người dùng';
+      let avatarUrl: string | null = null;
+      if (rd.user_id === currentUserId) {
+        userName = currentUserProfile?.display_name || 'Tôi';
+        avatarUrl = currentUserProfile?.avatar_url || null;
+      } else if (membersMapRef.current[rd.user_id]) {
+        userName = membersMapRef.current[rd.user_id].display_name || 'Người dùng';
+        avatarUrl = membersMapRef.current[rd.user_id].avatar_url || null;
+      }
+
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id !== rd.message_id) return msg;
+
+          if (msg.reads?.some((r) => r.user_id === rd.user_id)) {
+            return msg;
+          }
+
+          const newRead: ReadReceiptUser = {
+            user_id: rd.user_id,
+            user_name: userName,
+            avatar_url: avatarUrl,
+            read_at: rd.read_at,
+          };
+
+          return {
+            ...msg,
+            reads: [...(msg.reads || []), newRead],
+          };
+        })
+      );
+    };
+
     const unsubscribe = messageService.subscribeToConversation(conversationId, {
       onNewMessage: handleIncomingMessage,
       onReactionInsert: handleReactionInsert,
       onReactionDelete: handleReactionDelete,
+      onReadReceipt: handleReadReceipt,
     });
 
     return () => {
@@ -578,6 +617,13 @@ export function useChatMessages({
     [conversationId, currentUserId]
   );
 
+  // 9. Reusable read receipts management & grouping
+  const { readersByMessageId, isActivelyVisible } = useReadReceipts({
+    conversationId,
+    currentUserId,
+    messages,
+  });
+
   return {
     messages,
     isLoading,
@@ -587,6 +633,8 @@ export function useChatMessages({
     replyingTo,
     highlightedMessageId,
     reactionViewerMessage,
+    readersByMessageId,
+    isActivelyVisible,
     sendMessage,
     retryMessage,
     loadOlderMessages,

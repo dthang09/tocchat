@@ -34,11 +34,19 @@ export interface ReactionGroup {
   users: ReactionUser[];
 }
 
+export interface ReadReceiptUser {
+  user_id: string;
+  user_name: string;
+  avatar_url?: string | null;
+  read_at: string;
+}
+
 export interface ChatMessage extends Message {
   status?: MessageStatus;
   sender?: ChatSender | null;
   reply_to?: ReplyPreview | null;
   reactions?: ReactionGroup[];
+  reads?: ReadReceiptUser[];
 }
 
 export interface SendMessageParams {

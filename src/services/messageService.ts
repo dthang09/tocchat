@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Message, MessageType, MessageReaction } from '../types';
+import type { Message, MessageType, MessageReaction, MessageRead } from '../types';
 import type {
   ChatMessage,
   ChatSender,
@@ -8,10 +8,11 @@ import type {
   ReplyPreview,
   ReactionGroup,
   ReactionUser,
+  ReadReceiptUser,
 } from '../features/chat/types';
 
 /**
- * Helper to resolve sender profiles, reply previews, and reactions for a batch of messages
+ * Helper to resolve sender profiles, reply previews, reactions, and read receipts for a batch of messages
  */
 async function hydrateMessages(rawBatch: Message[], currentUserId?: string): Promise<ChatMessage[]> {
   if (rawBatch.length === 0) return [];
@@ -37,7 +38,19 @@ async function hydrateMessages(rawBatch: Message[], currentUserId?: string): Pro
     if (r.user_id) senderIds.add(r.user_id);
   }
 
-  // 2. Fetch missing reply messages (ones not already in this batch)
+  // 2. Fetch read receipts for these messages
+  const { data: readsData, error: readsError } = await supabase
+    .from('message_reads')
+    .select('*')
+    .in('message_id', messageIds);
+
+  const rawReads = (!readsError && readsData ? readsData : []) as MessageRead[];
+
+  for (const rd of rawReads) {
+    if (rd.user_id) senderIds.add(rd.user_id);
+  }
+
+  // 3. Fetch missing reply messages (ones not already in this batch)
   const existingRepliesMap = new Map<string, Message>();
   for (const m of rawBatch) {
     existingRepliesMap.set(m.id, m);
@@ -59,7 +72,7 @@ async function hydrateMessages(rawBatch: Message[], currentUserId?: string): Pro
     }
   }
 
-  // 3. Fetch all needed profiles (senders + reaction authors)
+  // 4. Fetch all needed profiles (senders + reaction authors + read receipt readers)
   const sendersMap: Record<string, ChatSender> = {};
   const allSenderIds = Array.from(senderIds);
 
@@ -76,7 +89,7 @@ async function hydrateMessages(rawBatch: Message[], currentUserId?: string): Pro
     }
   }
 
-  // 4. Group reactions by message_id
+  // 5. Group reactions by message_id
   const reactionsByMessage: Record<string, Record<string, ReactionUser[]>> = {};
   for (const r of rawReactions) {
     if (!reactionsByMessage[r.message_id]) {
@@ -95,7 +108,22 @@ async function hydrateMessages(rawBatch: Message[], currentUserId?: string): Pro
     });
   }
 
-  // 5. Map into ChatMessage with reply_to preview and reactions
+  // 6. Group read receipts by message_id
+  const readsByMessage: Record<string, ReadReceiptUser[]> = {};
+  for (const rd of rawReads) {
+    if (!readsByMessage[rd.message_id]) {
+      readsByMessage[rd.message_id] = [];
+    }
+    const uProfile = sendersMap[rd.user_id];
+    readsByMessage[rd.message_id].push({
+      user_id: rd.user_id,
+      user_name: uProfile?.display_name || 'Người dùng',
+      avatar_url: uProfile?.avatar_url || null,
+      read_at: rd.read_at,
+    });
+  }
+
+  // 7. Map into ChatMessage with reply_to, reactions, and reads
   return rawBatch.map((m) => {
     let reply_to: ReplyPreview | null = null;
 
@@ -125,7 +153,6 @@ async function hydrateMessages(rawBatch: Message[], currentUserId?: string): Pro
       }
     }
 
-    // Build ReactionGroup[] for this message
     const msgReactionsRecord = reactionsByMessage[m.id] || {};
     const reactions: ReactionGroup[] = Object.entries(msgReactionsRecord).map(
       ([emoji, users]) => ({
@@ -136,12 +163,15 @@ async function hydrateMessages(rawBatch: Message[], currentUserId?: string): Pro
       })
     );
 
+    const reads: ReadReceiptUser[] = readsByMessage[m.id] || [];
+
     return {
       ...m,
       status: 'sent',
       sender: m.sender_id ? sendersMap[m.sender_id] || null : null,
       reply_to,
       reactions,
+      reads,
     };
   });
 }
@@ -311,6 +341,28 @@ export const messageService = {
   },
 
   /**
+   * Batch mark messages as read
+   * Avoids one request per message by inserting/upserting multiple rows at once
+   */
+  async markMessagesAsRead(messageIds: string[], userId: string): Promise<void> {
+    if (!messageIds || messageIds.length === 0 || !userId) return;
+
+    const rows = messageIds.map((id) => ({
+      message_id: id,
+      user_id: userId,
+      read_at: new Date().toISOString(),
+    }));
+
+    const { error } = await supabase
+      .from('message_reads')
+      .upsert(rows, { onConflict: 'message_id,user_id' });
+
+    if (error) {
+      console.warn('[messageService] markMessagesAsRead error:', error.message);
+    }
+  },
+
+  /**
    * Add a reaction to a message
    */
   async addReaction(messageId: string, userId: string, emoji: string): Promise<void> {
@@ -354,7 +406,6 @@ export const messageService = {
     oldEmoji: string,
     newEmoji: string
   ): Promise<void> {
-    // Delete old reaction
     await supabase
       .from('message_reactions')
       .delete()
@@ -362,7 +413,6 @@ export const messageService = {
       .eq('user_id', userId)
       .eq('emoji', oldEmoji);
 
-    // Insert new reaction
     const { error: insertErr } = await supabase
       .from('message_reactions')
       .insert({
@@ -406,7 +456,7 @@ export const messageService = {
   },
 
   /**
-   * Realtime subscription for conversation messages and reactions
+   * Realtime subscription for conversation messages, reactions, and read receipts
    */
   subscribeToConversation(
     conversationId: string,
@@ -414,6 +464,7 @@ export const messageService = {
       onNewMessage: (message: Message) => void;
       onReactionInsert?: (reaction: MessageReaction) => void;
       onReactionDelete?: (reaction: MessageReaction) => void;
+      onReadReceipt?: (read: MessageRead) => void;
     }
   ): () => void {
     const channelName = `chat:${conversationId}:${Date.now()}`;
@@ -457,6 +508,19 @@ export const messageService = {
         (payload) => {
           if (payload.old && callbacks.onReactionDelete) {
             callbacks.onReactionDelete(payload.old as MessageReaction);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'message_reads',
+        },
+        (payload) => {
+          if (payload.new && callbacks.onReadReceipt) {
+            callbacks.onReadReceipt(payload.new as MessageRead);
           }
         }
       )

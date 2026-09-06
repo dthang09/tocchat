@@ -87,6 +87,7 @@ export const ChatScreen: React.FC = () => {
     replyingTo,
     highlightedMessageId,
     reactionViewerMessage,
+    readersByMessageId,
     sendMessage,
     retryMessage,
     loadOlderMessages,
@@ -227,6 +228,7 @@ export const ChatScreen: React.FC = () => {
           isLoadingOlder={isLoadingOlder}
           hasMore={hasMore}
           highlightedMessageId={highlightedMessageId}
+          readersByMessageId={readersByMessageId}
           onLoadOlder={loadOlderMessages}
           onRetryMessage={retryMessage}
           onReplyMessage={startReply}
