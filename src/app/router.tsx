@@ -7,7 +7,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { LoginScreen, RegisterScreen, ProtectedRoute, PublicOnlyRoute } from '../features/auth';
 import { ProfileScreen, EditProfileScreen } from '../features/profiles';
-import { ConversationScreen } from '../features/conversations';
+import { ChatScreen } from '../features/chat';
 import { FriendListScreen, FriendSearchScreen } from '../features/friends';
 
 export const router = createBrowserRouter([
@@ -40,7 +40,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'conversations/:conversationId',
-            element: <ConversationScreen />,
+            element: <ChatScreen />,
           },
           {
             path: 'bots',

@@ -1,6 +1,14 @@
 /**
  * Feature: chat
- * Planned in: Modules 06-11 — Messaging & Realtime Chat
- * TODO: Implement in upcoming phase modules.
+ * Module 07 — Realtime Text Messaging
  */
-export {};
+
+export * from './types';
+export * from './components/ChatScreen';
+export * from './components/MessageRow';
+export * from './components/MessageBubble';
+export * from './components/DateSeparator';
+export * from './components/MessageComposer';
+export * from './components/VirtualizedMessageList';
+export * from './hooks/useChatMessages';
+export { messageService } from '../../services/messageService';

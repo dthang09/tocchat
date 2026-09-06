@@ -87,7 +87,12 @@ For each completed module, record:
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Known limitations: Local migrations only. Supabase CLI unavailable, so Typescript types for messaging tables were updated manually in database.ts.
-- [ ] Module 07 — Realtime Text Messaging
+- [x] Module 07 — Realtime Text Messaging
+    - Completed: 2026-09-06
+    - Commit: pending
+    - Branch: main
+    - Checks: typecheck ✅ / lint ✅ / build ✅
+    - Known limitations: Text messaging only; replies, reactions, read receipts, and typing indicators are planned for Modules 08-11.
 - [ ] Module 08 — Message Replies
 - [ ] Module 09 — Message Reactions
 - [ ] Module 10 — Read Receipts
