@@ -16,6 +16,8 @@ export interface MessageRowProps {
   onRetry?: (messageId: string) => void;
   onReply?: (message: ChatMessage) => void;
   onJumpToMessage?: (messageId: string) => void;
+  onToggleReaction?: (messageId: string, emoji: string) => void;
+  onOpenReactionViewer?: (message: ChatMessage) => void;
 }
 
 const MessageRowComponent: React.FC<MessageRowProps> = ({
@@ -29,6 +31,8 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
   onRetry,
   onReply,
   onJumpToMessage,
+  onToggleReaction,
+  onOpenReactionViewer,
 }) => {
   const senderName = message.sender?.display_name || 'Người dùng';
   const senderAvatar = message.sender?.avatar_url;
@@ -78,6 +82,8 @@ const MessageRowComponent: React.FC<MessageRowProps> = ({
             onRetry={onRetry}
             onReply={onReply}
             onJumpToMessage={onJumpToMessage}
+            onToggleReaction={onToggleReaction}
+            onOpenReactionViewer={onOpenReactionViewer}
             showTimestamp={isLastInGroup}
           />
         </div>
@@ -94,6 +100,7 @@ export const MessageRow = React.memo(MessageRowComponent, (prevProps, nextProps)
     prevProps.message.created_at === nextProps.message.created_at &&
     prevProps.message.reply_to_message_id === nextProps.message.reply_to_message_id &&
     prevProps.message.reply_to?.content === nextProps.message.reply_to?.content &&
+    prevProps.message.reactions === nextProps.message.reactions &&
     prevProps.isCurrentUser === nextProps.isCurrentUser &&
     prevProps.isFirstInGroup === nextProps.isFirstInGroup &&
     prevProps.isLastInGroup === nextProps.isLastInGroup &&

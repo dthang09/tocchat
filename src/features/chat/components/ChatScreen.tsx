@@ -13,6 +13,7 @@ import { useAuth } from '../../auth';
 import { useChatMessages } from '../hooks/useChatMessages';
 import { VirtualizedMessageList } from './VirtualizedMessageList';
 import { MessageComposer } from './MessageComposer';
+import { ReactionViewerModal } from './ReactionViewerModal';
 import { Avatar } from '../../../components/ui/Avatar';
 import { Spinner } from '../../../components/ui/Spinner';
 import type { ChatSender } from '../types';
@@ -76,7 +77,7 @@ export const ChatScreen: React.FC = () => {
     return map;
   }, [conversation?.members]);
 
-  // 3. Connect messages hook with replies and jump-to support
+  // 3. Connect messages hook with replies, reactions, and jump-to support
   const {
     messages,
     isLoading: isMessagesLoading,
@@ -85,12 +86,16 @@ export const ChatScreen: React.FC = () => {
     error: messagesError,
     replyingTo,
     highlightedMessageId,
+    reactionViewerMessage,
     sendMessage,
     retryMessage,
     loadOlderMessages,
     startReply,
     cancelReply,
+    toggleReaction,
     jumpToMessage,
+    openReactionViewer,
+    closeReactionViewer,
   } = useChatMessages({
     conversationId: conversationId || '',
     currentUserId: user?.id,
@@ -226,6 +231,8 @@ export const ChatScreen: React.FC = () => {
           onRetryMessage={retryMessage}
           onReplyMessage={startReply}
           onJumpToMessage={jumpToMessage}
+          onToggleReaction={toggleReaction}
+          onOpenReactionViewer={openReactionViewer}
         />
       )}
 
@@ -237,6 +244,20 @@ export const ChatScreen: React.FC = () => {
         disabled={!user}
         placeholder="Nhập tin nhắn..."
       />
+
+      {/* Reaction Viewer Modal */}
+      {reactionViewerMessage && (
+        <ReactionViewerModal
+          message={reactionViewerMessage}
+          currentUserId={user?.id}
+          onRemoveReaction={(emoji) => {
+            if (reactionViewerMessage) {
+              toggleReaction(reactionViewerMessage.id, emoji);
+            }
+          }}
+          onClose={closeReactionViewer}
+        />
+      )}
     </div>
   );
 };

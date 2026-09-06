@@ -1,26 +1,40 @@
 import { supabase } from '../lib/supabase';
-import type { Message, MessageType } from '../types';
+import type { Message, MessageType, MessageReaction } from '../types';
 import type {
   ChatMessage,
   ChatSender,
   MessagesPageResult,
   SendMessageParams,
   ReplyPreview,
+  ReactionGroup,
+  ReactionUser,
 } from '../features/chat/types';
 
 /**
- * Helper to resolve sender profiles and reply previews for a batch of messages
+ * Helper to resolve sender profiles, reply previews, and reactions for a batch of messages
  */
-async function hydrateMessages(rawBatch: Message[]): Promise<ChatMessage[]> {
+async function hydrateMessages(rawBatch: Message[], currentUserId?: string): Promise<ChatMessage[]> {
   if (rawBatch.length === 0) return [];
 
-  // 1. Collect all sender IDs and reply IDs
+  const messageIds = rawBatch.map((m) => m.id);
   const senderIds = new Set<string>();
   const replyIds = new Set<string>();
 
   for (const m of rawBatch) {
     if (m.sender_id) senderIds.add(m.sender_id);
     if (m.reply_to_message_id) replyIds.add(m.reply_to_message_id);
+  }
+
+  // 1. Fetch reactions for these messages
+  const { data: reactionsData, error: reactionsError } = await supabase
+    .from('message_reactions')
+    .select('*')
+    .in('message_id', messageIds);
+
+  const rawReactions = (!reactionsError && reactionsData ? reactionsData : []) as MessageReaction[];
+
+  for (const r of rawReactions) {
+    if (r.user_id) senderIds.add(r.user_id);
   }
 
   // 2. Fetch missing reply messages (ones not already in this batch)
@@ -45,7 +59,7 @@ async function hydrateMessages(rawBatch: Message[]): Promise<ChatMessage[]> {
     }
   }
 
-  // 3. Fetch all needed sender profiles
+  // 3. Fetch all needed profiles (senders + reaction authors)
   const sendersMap: Record<string, ChatSender> = {};
   const allSenderIds = Array.from(senderIds);
 
@@ -62,7 +76,26 @@ async function hydrateMessages(rawBatch: Message[]): Promise<ChatMessage[]> {
     }
   }
 
-  // 4. Map into ChatMessage with reply_to preview
+  // 4. Group reactions by message_id
+  const reactionsByMessage: Record<string, Record<string, ReactionUser[]>> = {};
+  for (const r of rawReactions) {
+    if (!reactionsByMessage[r.message_id]) {
+      reactionsByMessage[r.message_id] = {};
+    }
+    if (!reactionsByMessage[r.message_id][r.emoji]) {
+      reactionsByMessage[r.message_id][r.emoji] = [];
+    }
+
+    const uProfile = sendersMap[r.user_id];
+    reactionsByMessage[r.message_id][r.emoji].push({
+      user_id: r.user_id,
+      user_name: uProfile?.display_name || 'Người dùng',
+      avatar_url: uProfile?.avatar_url || null,
+      emoji: r.emoji,
+    });
+  }
+
+  // 5. Map into ChatMessage with reply_to preview and reactions
   return rawBatch.map((m) => {
     let reply_to: ReplyPreview | null = null;
 
@@ -92,11 +125,23 @@ async function hydrateMessages(rawBatch: Message[]): Promise<ChatMessage[]> {
       }
     }
 
+    // Build ReactionGroup[] for this message
+    const msgReactionsRecord = reactionsByMessage[m.id] || {};
+    const reactions: ReactionGroup[] = Object.entries(msgReactionsRecord).map(
+      ([emoji, users]) => ({
+        emoji,
+        count: users.length,
+        hasReacted: users.some((u) => u.user_id === currentUserId),
+        users,
+      })
+    );
+
     return {
       ...m,
       status: 'sent',
       sender: m.sender_id ? sendersMap[m.sender_id] || null : null,
       reply_to,
+      reactions,
     };
   });
 }
@@ -105,7 +150,11 @@ export const messageService = {
   /**
    * Fetch the latest batch of messages in a conversation
    */
-  async getLatestMessages(conversationId: string, limit = 40): Promise<MessagesPageResult> {
+  async getLatestMessages(
+    conversationId: string,
+    limit = 40,
+    currentUserId?: string
+  ): Promise<MessagesPageResult> {
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -127,7 +176,7 @@ export const messageService = {
       const hasMore = data.length > limit;
       const rawBatch = (hasMore ? data.slice(0, limit) : data) as Message[];
 
-      const messages = await hydrateMessages(rawBatch);
+      const messages = await hydrateMessages(rawBatch, currentUserId);
 
       // Return in chronological order (earliest first, newest last)
       messages.reverse();
@@ -145,7 +194,8 @@ export const messageService = {
   async getOlderMessages(
     conversationId: string,
     beforeCreatedAt: string,
-    limit = 40
+    limit = 40,
+    currentUserId?: string
   ): Promise<MessagesPageResult> {
     try {
       const { data, error } = await supabase
@@ -169,7 +219,7 @@ export const messageService = {
       const hasMore = data.length > limit;
       const rawBatch = (hasMore ? data.slice(0, limit) : data) as Message[];
 
-      const messages = await hydrateMessages(rawBatch);
+      const messages = await hydrateMessages(rawBatch, currentUserId);
 
       // Return in chronological order
       messages.reverse();
@@ -183,15 +233,14 @@ export const messageService = {
 
   /**
    * Fetch messages up to and including a specific target message ID
-   * Used when jumping to an older quoted message not yet loaded in state
    */
   async getMessagesUpTo(
     conversationId: string,
     targetMessageId: string,
-    currentOldestCreatedAt: string
+    currentOldestCreatedAt: string,
+    currentUserId?: string
   ): Promise<{ messages: ChatMessage[]; found: boolean }> {
     try {
-      // 1. Check target message
       const { data: targetMsg, error: targetError } = await supabase
         .from('messages')
         .select('*')
@@ -202,7 +251,6 @@ export const messageService = {
         return { messages: [], found: false };
       }
 
-      // 2. Fetch from target message created_at up to current oldest
       const { data: batch, error: batchError } = await supabase
         .from('messages')
         .select('*')
@@ -217,7 +265,7 @@ export const messageService = {
         return { messages: [], found: false };
       }
 
-      const hydrated = await hydrateMessages(batch as Message[]);
+      const hydrated = await hydrateMessages(batch as Message[], currentUserId);
       hydrated.reverse();
 
       return { messages: hydrated, found: true };
@@ -251,7 +299,6 @@ export const messageService = {
       throw new Error(error.message);
     }
 
-    // Update conversation updated_at in the background
     supabase
       .from('conversations')
       .update({ updated_at: now })
@@ -264,7 +311,74 @@ export const messageService = {
   },
 
   /**
-   * Fetch single user profile for newly arrived realtime message
+   * Add a reaction to a message
+   */
+  async addReaction(messageId: string, userId: string, emoji: string): Promise<void> {
+    const { error } = await supabase
+      .from('message_reactions')
+      .insert({
+        message_id: messageId,
+        user_id: userId,
+        emoji,
+      });
+
+    if (error) {
+      console.warn('[messageService] addReaction error:', error.message);
+      throw new Error(error.message);
+    }
+  },
+
+  /**
+   * Remove own reaction from a message
+   */
+  async removeReaction(messageId: string, userId: string, emoji: string): Promise<void> {
+    const { error } = await supabase
+      .from('message_reactions')
+      .delete()
+      .eq('message_id', messageId)
+      .eq('user_id', userId)
+      .eq('emoji', emoji);
+
+    if (error) {
+      console.warn('[messageService] removeReaction error:', error.message);
+      throw new Error(error.message);
+    }
+  },
+
+  /**
+   * Change own reaction on a message (replace old with new)
+   */
+  async changeReaction(
+    messageId: string,
+    userId: string,
+    oldEmoji: string,
+    newEmoji: string
+  ): Promise<void> {
+    // Delete old reaction
+    await supabase
+      .from('message_reactions')
+      .delete()
+      .eq('message_id', messageId)
+      .eq('user_id', userId)
+      .eq('emoji', oldEmoji);
+
+    // Insert new reaction
+    const { error: insertErr } = await supabase
+      .from('message_reactions')
+      .insert({
+        message_id: messageId,
+        user_id: userId,
+        emoji: newEmoji,
+      });
+
+    if (insertErr) {
+      console.warn('[messageService] changeReaction insert error:', insertErr.message);
+      throw new Error(insertErr.message);
+    }
+  },
+
+  /**
+   * Fetch single user profile
    */
   async getSenderProfile(senderId: string): Promise<ChatSender | null> {
     const { data, error } = await supabase
@@ -278,7 +392,7 @@ export const messageService = {
   },
 
   /**
-   * Fetch single message details (for reply resolution)
+   * Fetch single message details
    */
   async getMessageById(messageId: string): Promise<Message | null> {
     const { data, error } = await supabase
@@ -292,13 +406,17 @@ export const messageService = {
   },
 
   /**
-   * Realtime subscription for conversation messages
+   * Realtime subscription for conversation messages and reactions
    */
-  subscribeToConversationMessages(
+  subscribeToConversation(
     conversationId: string,
-    onNewMessage: (message: Message) => void
+    callbacks: {
+      onNewMessage: (message: Message) => void;
+      onReactionInsert?: (reaction: MessageReaction) => void;
+      onReactionDelete?: (reaction: MessageReaction) => void;
+    }
   ): () => void {
-    const channelName = `messages:${conversationId}:${Date.now()}`;
+    const channelName = `chat:${conversationId}:${Date.now()}`;
 
     const channel = supabase
       .channel(channelName)
@@ -312,7 +430,33 @@ export const messageService = {
         },
         (payload) => {
           if (payload.new) {
-            onNewMessage(payload.new as Message);
+            callbacks.onNewMessage(payload.new as Message);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'message_reactions',
+        },
+        (payload) => {
+          if (payload.new && callbacks.onReactionInsert) {
+            callbacks.onReactionInsert(payload.new as MessageReaction);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'message_reactions',
+        },
+        (payload) => {
+          if (payload.old && callbacks.onReactionDelete) {
+            callbacks.onReactionDelete(payload.old as MessageReaction);
           }
         }
       )

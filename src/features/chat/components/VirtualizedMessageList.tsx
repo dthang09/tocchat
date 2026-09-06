@@ -18,6 +18,8 @@ interface VirtualizedMessageListProps {
   onRetryMessage?: (messageId: string) => void;
   onReplyMessage?: (message: ChatMessage) => void;
   onJumpToMessage?: (messageId: string) => void;
+  onToggleReaction?: (messageId: string, emoji: string) => void;
+  onOpenReactionViewer?: (message: ChatMessage) => void;
 }
 
 const isSameDay = (d1: string, d2: string): boolean => {
@@ -44,6 +46,8 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
   onRetryMessage,
   onReplyMessage,
   onJumpToMessage,
+  onToggleReaction,
+  onOpenReactionViewer,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
@@ -208,6 +212,8 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
                 onRetry={onRetryMessage}
                 onReply={onReplyMessage}
                 onJumpToMessage={onJumpToMessage}
+                onToggleReaction={onToggleReaction}
+                onOpenReactionViewer={onOpenReactionViewer}
               />
             );
           })}

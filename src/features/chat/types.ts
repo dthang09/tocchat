@@ -2,6 +2,9 @@ import type { Message, MessageType } from '../../types';
 
 export type MessageStatus = 'sending' | 'sent' | 'failed';
 
+export const QUICK_REACTIONS = ['❤️', '😂', '👍', '😢', '😡', '😮'] as const;
+export type QuickReactionEmoji = (typeof QUICK_REACTIONS)[number];
+
 export interface ChatSender {
   id: string;
   display_name: string | null;
@@ -17,10 +20,25 @@ export interface ReplyPreview {
   is_deleted?: boolean;
 }
 
+export interface ReactionUser {
+  user_id: string;
+  user_name: string;
+  avatar_url?: string | null;
+  emoji: string;
+}
+
+export interface ReactionGroup {
+  emoji: string;
+  count: number;
+  hasReacted: boolean;
+  users: ReactionUser[];
+}
+
 export interface ChatMessage extends Message {
   status?: MessageStatus;
   sender?: ChatSender | null;
   reply_to?: ReplyPreview | null;
+  reactions?: ReactionGroup[];
 }
 
 export interface SendMessageParams {

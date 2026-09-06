@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { AlertCircle, RotateCcw, Clock, Reply } from 'lucide-react';
+import React, { useState, useRef, useMemo } from 'react';
+import { AlertCircle, RotateCcw, Clock, Reply, Smile } from 'lucide-react';
 import type { ChatMessage } from '../types';
+import { ReactionPicker } from './ReactionPicker';
+import { ReactionPill } from './ReactionPill';
 import { cn } from '../../../utils/cn';
 
 interface MessageBubbleProps {
@@ -10,6 +12,8 @@ interface MessageBubbleProps {
   onRetry?: (messageId: string) => void;
   onReply?: (message: ChatMessage) => void;
   onJumpToMessage?: (messageId: string) => void;
+  onToggleReaction?: (messageId: string, emoji: string) => void;
+  onOpenReactionViewer?: (message: ChatMessage) => void;
   showTimestamp?: boolean;
 }
 
@@ -31,11 +35,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
     onRetry,
     onReply,
     onJumpToMessage,
+    onToggleReaction,
+    onOpenReactionViewer,
     showTimestamp = true,
   }) => {
     const isSending = message.status === 'sending';
     const isFailed = message.status === 'failed';
     const timeText = formatMessageTime(message.created_at);
+
+    // Reaction picker toggle state
+    const [showReactionPicker, setShowReactionPicker] = useState(false);
+
+    // Find current user's reacted emoji on this message
+    const currentReaction = useMemo(() => {
+      const activeGroup = (message.reactions || []).find((g) => g.hasReacted);
+      return activeGroup ? activeGroup.emoji : null;
+    }, [message.reactions]);
 
     // Touch swipe & long-press state
     const [swipeOffset, setSwipeOffset] = useState(0);
@@ -49,11 +64,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
       touchStartYRef.current = e.touches[0].clientY;
       isSwipingRef.current = false;
 
-      // Long-press timer (450ms)
+      // Long-press (450ms) opens Reaction Picker (Messenger style)
       longPressTimeoutRef.current = setTimeout(() => {
-        if (!isSwipingRef.current && onReply) {
+        if (!isSwipingRef.current && onToggleReaction) {
           if (navigator.vibrate) navigator.vibrate(30);
-          onReply(message);
+          setShowReactionPicker(true);
         }
       }, 450);
     };
@@ -74,7 +89,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
       if (Math.abs(diffX) > 20) {
         if (longPressTimeoutRef.current) clearTimeout(longPressTimeoutRef.current);
         isSwipingRef.current = true;
-        // Dampen swipe distance
         const offset = Math.max(0, Math.min(diffX * 0.6, 60));
         setSwipeOffset(offset);
       }
@@ -93,17 +107,32 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
     };
 
     return (
-      <div className="relative group flex items-center gap-1.5">
-        {/* Reply Action Button on Desktop Hover (for Current User - left side of bubble) */}
-        {isCurrentUser && onReply && !isFailed && !isSending && (
-          <button
-            onClick={() => onReply(message)}
-            title="Trả lời"
-            aria-label="Trả lời tin nhắn"
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 active:scale-95 cursor-pointer shrink-0"
-          >
-            <Reply className="w-3.5 h-3.5" />
-          </button>
+      <div className="relative group flex items-center gap-1">
+        {/* Desktop Hover Action Buttons (Left side for Current User) */}
+        {isCurrentUser && !isFailed && !isSending && (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 shrink-0">
+            {onToggleReaction && (
+              <button
+                onClick={() => setShowReactionPicker((v) => !v)}
+                title="Bày tỏ cảm xúc"
+                aria-label="Thả cảm xúc"
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-amber-500 active:scale-95 cursor-pointer"
+              >
+                <Smile className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {onReply && (
+              <button
+                onClick={() => onReply(message)}
+                title="Trả lời"
+                aria-label="Trả lời tin nhắn"
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 active:scale-95 cursor-pointer"
+              >
+                <Reply className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         )}
 
         {/* Swipe indicator icon behind bubble on mobile swipe */}
@@ -114,6 +143,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
           >
             <Reply className="w-4 h-4" />
           </div>
+        )}
+
+        {/* Reaction Picker Popup */}
+        {showReactionPicker && onToggleReaction && (
+          <ReactionPicker
+            currentReaction={currentReaction}
+            position={isCurrentUser ? 'top-right' : 'top-left'}
+            onSelectReaction={(emoji) => onToggleReaction(message.id, emoji)}
+            onClose={() => setShowReactionPicker(false)}
+          />
         )}
 
         {/* Bubble container with touch handlers and transition */}
@@ -193,6 +232,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
             )}
           </div>
 
+          {/* Grouped Reactions Pill underneath the bubble */}
+          {message.reactions && message.reactions.length > 0 && onOpenReactionViewer && (
+            <ReactionPill
+              reactions={message.reactions}
+              isCurrentUser={isCurrentUser}
+              onClick={() => onOpenReactionViewer(message)}
+            />
+          )}
+
           {/* Failed State Indicator & Retry Button */}
           {isFailed && (
             <div className="flex items-center gap-1.5 mt-1 text-xs text-rose-500 self-end select-none">
@@ -218,16 +266,31 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
           )}
         </div>
 
-        {/* Reply Action Button on Desktop Hover (for Other User - right side of bubble) */}
-        {!isCurrentUser && onReply && !isFailed && !isSending && (
-          <button
-            onClick={() => onReply(message)}
-            title="Trả lời"
-            aria-label="Trả lời tin nhắn"
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 active:scale-95 cursor-pointer shrink-0"
-          >
-            <Reply className="w-3.5 h-3.5" />
-          </button>
+        {/* Desktop Hover Action Buttons (Right side for Other User) */}
+        {!isCurrentUser && !isFailed && !isSending && (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 shrink-0">
+            {onReply && (
+              <button
+                onClick={() => onReply(message)}
+                title="Trả lời"
+                aria-label="Trả lời tin nhắn"
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 active:scale-95 cursor-pointer"
+              >
+                <Reply className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {onToggleReaction && (
+              <button
+                onClick={() => setShowReactionPicker((v) => !v)}
+                title="Bày tỏ cảm xúc"
+                aria-label="Thả cảm xúc"
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-amber-500 active:scale-95 cursor-pointer"
+              >
+                <Smile className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         )}
       </div>
     );
