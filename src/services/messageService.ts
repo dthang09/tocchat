@@ -9,7 +9,11 @@ import type {
   ReactionGroup,
   ReactionUser,
   ReadReceiptUser,
+  TypingBroadcastPayload,
 } from '../features/chat/types';
+
+// Map of active conversation realtime channels to broadcast typing without creating duplicate channels
+const activeConversationChannels = new Map<string, ReturnType<typeof supabase.channel>>();
 
 /**
  * Helper to resolve sender profiles, reply previews, reactions, and read receipts for a batch of messages
@@ -456,7 +460,7 @@ export const messageService = {
   },
 
   /**
-   * Realtime subscription for conversation messages, reactions, and read receipts
+   * Realtime subscription for conversation messages, reactions, read receipts, and typing broadcast
    */
   subscribeToConversation(
     conversationId: string,
@@ -465,9 +469,10 @@ export const messageService = {
       onReactionInsert?: (reaction: MessageReaction) => void;
       onReactionDelete?: (reaction: MessageReaction) => void;
       onReadReceipt?: (read: MessageRead) => void;
+      onTyping?: (payload: TypingBroadcastPayload) => void;
     }
   ): () => void {
-    const channelName = `chat:${conversationId}:${Date.now()}`;
+    const channelName = `conversation:${conversationId}`;
 
     const channel = supabase
       .channel(channelName)
@@ -524,10 +529,41 @@ export const messageService = {
           }
         }
       )
+      .on(
+        'broadcast',
+        { event: 'typing' },
+        ({ payload }) => {
+          if (payload && callbacks.onTyping) {
+            callbacks.onTyping(payload as TypingBroadcastPayload);
+          }
+        }
+      )
       .subscribe();
 
+    activeConversationChannels.set(conversationId, channel);
+
     return () => {
+      activeConversationChannels.delete(conversationId);
       supabase.removeChannel(channel);
     };
+  },
+
+  /**
+   * Broadcast typing status via Supabase Realtime Broadcast (ephemeral, not stored in DB)
+   */
+  sendTypingIndicator(
+    conversationId: string,
+    payload: TypingBroadcastPayload
+  ): void {
+    const channel = activeConversationChannels.get(conversationId);
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload,
+      }).catch((err) => {
+        console.warn('[messageService] sendTypingIndicator error:', err);
+      });
+    }
   },
 };

@@ -20,6 +20,7 @@ import {
   type ConversationWithDetails,
 } from '../../features/conversations';
 import { useFriends } from '../../features/friends';
+import { usePresence } from '../../features/presence';
 import { Avatar } from '../../features/profiles';
 
 export const ConversationsPage: React.FC = () => {
@@ -36,6 +37,8 @@ export const ConversationsPage: React.FC = () => {
     friends,
     incomingCount,
   } = useFriends();
+
+  const { isUserOnline } = usePresence();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -197,6 +200,8 @@ export const ConversationsPage: React.FC = () => {
                   src={friend.avatar_url}
                   name={name}
                   size="xl"
+                  isOnline={isUserOnline(friend.id)}
+                  showOnlineDot={true}
                 />
                 <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 w-14 text-center truncate">
                   {name}

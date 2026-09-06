@@ -41,6 +41,20 @@ export interface ReadReceiptUser {
   read_at: string;
 }
 
+export interface TypingBroadcastPayload {
+  userId: string;
+  userName: string;
+  avatarUrl?: string | null;
+  isTyping: boolean;
+}
+
+export interface TypingUser {
+  userId: string;
+  userName: string;
+  avatarUrl?: string | null;
+  lastTypedAt: number;
+}
+
 export interface ChatMessage extends Message {
   status?: MessageStatus;
   sender?: ChatSender | null;

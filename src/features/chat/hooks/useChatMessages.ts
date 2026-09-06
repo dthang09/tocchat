@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { messageService } from '../../../services/messageService';
 import { useReadReceipts } from './useReadReceipts';
+import { useTyping } from './useTyping';
 import type { ChatMessage, ChatSender, ReplyPreview, ReactionGroup, ReactionUser, ReadReceiptUser } from '../types';
 import type { Message, MessageReaction, MessageRead } from '../../../types';
 
@@ -42,6 +43,20 @@ export function useChatMessages({
 
   const membersMapRef = useRef(membersMap);
   membersMapRef.current = membersMap;
+
+  // Ephemeral broadcast typing indicators
+  const {
+    typingUsers,
+    typingText,
+    handleIncomingTyping,
+    handleUserTyping,
+    stopUserTyping,
+  } = useTyping({
+    conversationId,
+    currentUserId,
+    currentUserName: currentUserProfile?.display_name || 'Người dùng',
+    currentUserAvatar: currentUserProfile?.avatar_url,
+  });
 
   // 1. Initial Load of latest messages
   useEffect(() => {
@@ -327,18 +342,21 @@ export function useChatMessages({
       onReactionInsert: handleReactionInsert,
       onReactionDelete: handleReactionDelete,
       onReadReceipt: handleReadReceipt,
+      onTyping: handleIncomingTyping,
     });
 
     return () => {
       unsubscribe();
     };
-  }, [conversationId, currentUserId, currentUserProfile]);
+  }, [conversationId, currentUserId, currentUserProfile, handleIncomingTyping]);
 
   // 3. Send message with optimistic update & reply support
   const sendMessage = useCallback(
     async (content: string) => {
       const trimmed = content.trim();
       if (!trimmed || !conversationId || !currentUserId) return;
+
+      stopUserTyping();
 
       const messageId = crypto.randomUUID();
       const now = new Date().toISOString();
@@ -388,7 +406,7 @@ export function useChatMessages({
         );
       }
     },
-    [conversationId, currentUserId, currentUserProfile, replyingTo]
+    [conversationId, currentUserId, currentUserProfile, replyingTo, stopUserTyping]
   );
 
   // 4. Retry failed message
@@ -641,6 +659,10 @@ export function useChatMessages({
     reactionViewerMessage,
     readersByMessageId,
     isActivelyVisible,
+    typingUsers,
+    typingText,
+    handleUserTyping,
+    stopUserTyping,
     sendMessage,
     retryMessage,
     loadOlderMessages,

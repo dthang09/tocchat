@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback, useLayoutEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import type { ChatMessage, ReadReceiptUser } from '../types';
+import type { ChatMessage, ReadReceiptUser, TypingUser } from '../types';
 import { MessageRow } from './MessageRow';
+import { TypingIndicator } from './TypingIndicator';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Avatar } from '../../../components/ui/Avatar';
 
@@ -15,6 +16,8 @@ interface VirtualizedMessageListProps {
   hasMore: boolean;
   highlightedMessageId?: string | null;
   readersByMessageId?: Record<string, ReadReceiptUser[]>;
+  typingUsers?: TypingUser[];
+  typingText?: string | null;
   onLoadOlder: () => Promise<boolean>;
   onRetryMessage?: (messageId: string) => void;
   onReplyMessage?: (message: ChatMessage) => void;
@@ -44,6 +47,8 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
   hasMore,
   highlightedMessageId,
   readersByMessageId,
+  typingUsers = [],
+  typingText = null,
   onLoadOlder,
   onRetryMessage,
   onReplyMessage,
@@ -122,6 +127,13 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
       setShowScrollBottom(true);
     }
   }, [messages, currentUserId, isNearBottom, scrollToBottom]);
+
+  // Auto-scroll when someone starts typing if currently near bottom
+  useEffect(() => {
+    if (typingUsers.length > 0 && isNearBottom()) {
+      scrollToBottom(true);
+    }
+  }, [typingUsers.length, isNearBottom, scrollToBottom]);
 
   // 4. Scroll listener for backward pagination & floating button
   const handleScroll = useCallback(() => {
@@ -221,6 +233,9 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
             );
           })}
         </div>
+
+        {/* Ephemeral Typing Indicator Bubble */}
+        <TypingIndicator typingUsers={typingUsers} typingText={typingText} />
 
         {/* Bottom Anchor for auto-scroll */}
         <div ref={bottomAnchorRef} className="h-px w-full shrink-0" />

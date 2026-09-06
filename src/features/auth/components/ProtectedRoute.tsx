@@ -3,6 +3,8 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Spinner } from '../../../components/ui/Spinner';
 
+import { PresenceProvider } from '../../presence';
+
 export const ProtectedRoute: React.FC = () => {
   const { user, isInitialized } = useAuth();
   const location = useLocation();
@@ -24,5 +26,9 @@ export const ProtectedRoute: React.FC = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <PresenceProvider user={user}>
+      <Outlet />
+    </PresenceProvider>
+  );
 };

@@ -4,6 +4,9 @@ import type { ConversationWithDetails } from '../services/conversationService';
 import { Avatar } from '../../../components/ui/Avatar';
 import { cn } from '../../../utils/cn';
 
+import { useAuth } from '../../auth';
+import { usePresence } from '../../presence';
+
 export interface ConversationRowProps {
   conversation: ConversationWithDetails;
   onClick: () => void;
@@ -35,15 +38,25 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
   onClick,
   className,
 }) => {
+  const { user } = useAuth();
+  const { isUserOnline } = usePresence();
+
   const isGroup = conversation.type === 'group';
   const name = conversation.name || (isGroup ? 'Nhóm chưa đặt tên' : 'Người dùng TocChat');
   const avatarUrl = conversation.avatar_url;
   const timeText = formatConversationTime(conversation.updated_at || conversation.created_at);
 
-  // Secondary preview area (strictly no fake last messages!)
+  const otherMember = !isGroup
+    ? conversation.members?.find((m) => m.user_id !== user?.id)
+    : null;
+  const isOnline = otherMember ? isUserOnline(otherMember.user_id) : false;
+
+  // Secondary preview area
   const previewText = isGroup
     ? `Nhóm • ${conversation.memberCount} thành viên`
-    : 'Cuộc trò chuyện mới';
+    : isOnline
+    ? 'Đang hoạt động'
+    : 'Ngoại tuyến';
 
   return (
     <div
@@ -68,7 +81,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
           src={avatarUrl}
           name={name}
           size="xl"
-          isOnline={true}
+          isOnline={isOnline}
           showOnlineDot={!isGroup}
         />
         {isGroup && (

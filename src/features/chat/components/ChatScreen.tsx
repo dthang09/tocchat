@@ -9,6 +9,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { conversationService, type ConversationWithDetails } from '../../conversations/services/conversationService';
+import { usePresence } from '../../presence';
 import { useAuth } from '../../auth';
 import { useChatMessages } from '../hooks/useChatMessages';
 import { VirtualizedMessageList } from './VirtualizedMessageList';
@@ -77,6 +78,8 @@ export const ChatScreen: React.FC = () => {
     return map;
   }, [conversation?.members]);
 
+  const { isUserOnline } = usePresence();
+
   // 3. Connect messages hook with replies, reactions, and jump-to support
   const {
     messages,
@@ -88,6 +91,10 @@ export const ChatScreen: React.FC = () => {
     highlightedMessageId,
     reactionViewerMessage,
     readersByMessageId,
+    typingUsers,
+    typingText,
+    handleUserTyping,
+    stopUserTyping,
     sendMessage,
     retryMessage,
     loadOlderMessages,
@@ -138,9 +145,23 @@ export const ChatScreen: React.FC = () => {
   const isGroup = conversation.type === 'group';
   const name = conversation.name || (isGroup ? 'Nhóm chưa đặt tên' : 'Người dùng TocChat');
   const avatarUrl = conversation.avatar_url;
+
+  // 1-on-1: find the other participant
+  const otherMember = !isGroup
+    ? conversation.members?.find((m) => m.user_id !== user?.id)
+    : null;
+  const isOtherOnline = otherMember ? isUserOnline(otherMember.user_id) : false;
+
+  // Group: count online members (excluding self)
+  const onlineGroupCount = isGroup
+    ? conversation.members?.filter((m) => m.user_id !== user?.id && isUserOnline(m.user_id)).length || 0
+    : 0;
+
   const subtitle = isGroup
-    ? `${conversation.memberCount} thành viên`
-    : 'Đang hoạt động';
+    ? `${conversation.memberCount} thành viên • ${onlineGroupCount > 0 ? `${onlineGroupCount} trực tuyến` : '0 trực tuyến'}`
+    : isOtherOnline
+    ? 'Đang hoạt động'
+    : 'Ngoại tuyến';
 
   return (
     <div className="flex flex-col flex-1 h-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden">
@@ -160,7 +181,7 @@ export const ChatScreen: React.FC = () => {
               src={avatarUrl}
               name={name}
               size="md"
-              isOnline={!isGroup}
+              isOnline={isGroup ? undefined : isOtherOnline}
               showOnlineDot={!isGroup}
             />
             {isGroup && (
@@ -229,6 +250,8 @@ export const ChatScreen: React.FC = () => {
           hasMore={hasMore}
           highlightedMessageId={highlightedMessageId}
           readersByMessageId={readersByMessageId}
+          typingUsers={typingUsers}
+          typingText={typingText}
           onLoadOlder={loadOlderMessages}
           onRetryMessage={retryMessage}
           onReplyMessage={startReply}
@@ -243,6 +266,8 @@ export const ChatScreen: React.FC = () => {
         onSendMessage={sendMessage}
         replyingTo={replyingTo}
         onCancelReply={cancelReply}
+        onTyping={handleUserTyping}
+        onStopTyping={stopUserTyping}
         disabled={!user}
         placeholder="Nhập tin nhắn..."
       />

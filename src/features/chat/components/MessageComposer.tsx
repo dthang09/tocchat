@@ -7,6 +7,8 @@ interface MessageComposerProps {
   onSendMessage: (text: string) => void;
   replyingTo?: ReplyPreview | null;
   onCancelReply?: () => void;
+  onTyping?: () => void;
+  onStopTyping?: () => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -15,6 +17,8 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   onSendMessage,
   replyingTo,
   onCancelReply,
+  onTyping,
+  onStopTyping,
   disabled = false,
   placeholder = 'Nhập tin nhắn...',
 }) => {
@@ -40,6 +44,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
     const trimmed = text.trim();
     if (!trimmed || disabled) return;
 
+    onStopTyping?.();
     onSendMessage(trimmed);
     setText('');
 
@@ -102,7 +107,16 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
               ref={textareaRef}
               rows={1}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                const nextVal = e.target.value;
+                setText(nextVal);
+                if (nextVal.trim().length > 0) {
+                  onTyping?.();
+                } else {
+                  onStopTyping?.();
+                }
+              }}
+              onBlur={() => onStopTyping?.()}
               onKeyDown={handleKeyDown}
               disabled={disabled}
               placeholder={placeholder}
