@@ -95,7 +95,7 @@ For each completed module, record:
     - Known limitations: Text messaging only; replies, reactions, read receipts, and typing indicators are planned for Modules 08-11.
 - [x] Module 08 — Message Replies
     - Completed: 2026-09-06
-    - Commit: pending
+    - Commit: 33b57ed
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Known limitations: Text replies supported with quote jump-to and swipe/long-press gestures; message reactions, read receipts, and typing indicators are planned for Modules 09-11.
