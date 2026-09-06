@@ -89,7 +89,7 @@ For each completed module, record:
     - Known limitations: Local migrations only. Supabase CLI unavailable, so Typescript types for messaging tables were updated manually in database.ts.
 - [x] Module 07 — Realtime Text Messaging
     - Completed: 2026-09-06
-    - Commit: pending
+    - Commit: 9096401
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Known limitations: Text messaging only; replies, reactions, read receipts, and typing indicators are planned for Modules 08-11.
