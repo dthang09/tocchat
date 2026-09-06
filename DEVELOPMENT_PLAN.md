@@ -107,7 +107,7 @@ For each completed module, record:
     - Known limitations: Quick reactions (❤️ 😂 👍 😢 😡 😮) supported with long-press/hover picker, grouped count pills, reaction viewer modal, and realtime synchronization; read receipts and typing indicators are planned for Modules 10-11.
 - [x] Module 10 — Read Receipts
     - Completed: 2026-09-06
-    - Commit: pending
+    - Commit: e53c985
     - Branch: main
     - Checks: typecheck ✅ / lint ✅ / build ✅
     - Known limitations: Batch updates debounced at 500ms with active window/tab focus checks; typing indicators and presence planned for Module 11.
